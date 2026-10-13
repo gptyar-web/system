@@ -2,15 +2,15 @@
 
 پروژهٔ انتخاب‌شده **`efibfevyiepkwpnobaro`**، همان Backend فعلی سایت و کاربران واقعی مدرسه است. مدیر فعالِ دارای رمز تغییرکرده و TOTP تأییدشده از قبل وجود دارد؛ از همان حساب و MFA استفاده می‌شود. ساخت مدیر تازه، درج پروفایل، انتقال کاربران یا تغییر پروژه لازم نیست. ساختار نصب‌شده در `pukanizbahswrupscfmg` فعلاً آماده‌باش می‌ماند.
 
-این قابلیت با **GPT Actions** و OAuth Authorization Code کار می‌کند. اجرای SQL جدید روی پروژهٔ انتخاب‌شده هنوز تأیید نشده و تابع‌های جدید مدرسه تاکنون فقط در پروژهٔ آماده‌باش مستقر شده‌اند. تغییرات این شاخه هنوز روی `main` و سایت منتشرشده قرار نگرفته‌اند؛ URLهای زیر تنظیم نهایی‌اند و تا پایان استقرار، تأیید اتصال عملی نیستند.
+این قابلیت با **GPT Actions** و OAuth Authorization Code کار می‌کند. بستهٔ SQL افزایشی و هر سه تابع Backend روی پروژهٔ انتخاب‌شده نصب و حفظ داده‌های قبلی بررسی شده‌اند. ۲۷ بررسی HTTP سرویس واقعی موفق بودند؛ انتشار رابط هنوز در حال تکمیل است. ورود واقعی کاربر و callback ChatGPT هنوز آزموده نشده‌اند و نصب Backend به‌تنهایی تأیید اتصال عملی نیست.
 
-## اجرای SQL توسط مالک
+## SQL نصب‌شده
 
-1. از دیتابیس فعلی Backup قابل‌بازیابی تهیه کنید. [SQL Editor پروژهٔ فعلی](https://supabase.com/dashboard/project/efibfevyiepkwpnobaro/sql/new) را باز کنید و نام پروژه و نقش `postgres` را بررسی کنید.
-2. فایل آمادهٔ [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) را کامل کپی و یک‌بار اجرا کنید. این بسته [Migration OAuth](../supabase/migrations/20261007_oauth_connector.sql)، [کنترل Session مدیر](../supabase/migrations/20261009_manager_session_guard.sql) و مجوز اجرای `public.oauth_postgrest_guard()` برای `service_role` را در یک تراکنش اجرا می‌کند. اجرای فایل‌های پایه، Migrationهای نسخهٔ ۷ یا نصب‌کنندهٔ `school` روی این پروژه لازم نیست.
-3. خروجی موفق بسته باید `oauth_tables=7`، `oauth_rls_tables=7`، `service_guard_allowed=true` و `manager_session_guard_ready=true` داشته باشد. اگر SQL خطا داد، متن خطا را بدون رمز، Token یا اطلاعات کاربر گزارش کنید؛ Migration را برای دورزدن خطا دوباره اجرا یا جدول‌های موجود را حذف نکنید. پس از تأیید موفقیت، کنترل catalog و استقرار تابع‌ها انجام شود.
+فایل [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) با مجوز مالک یک‌بار روی `efibfevyiepkwpnobaro` اعمال شده است؛ آن را دوباره اجرا نکنید. بسته شامل [Migration OAuth](../supabase/migrations/20261007_oauth_connector.sql)، [کنترل Session مدیر](../supabase/migrations/20261009_manager_session_guard.sql) و مجوز اجرای `public.oauth_postgrest_guard()` برای `service_role` است. خروجی واقعی موفق `oauth_tables=7`، `oauth_rls_tables=7`، `service_guard_allowed=true` و `manager_session_guard_ready=true` بود. فایل‌های پایه، Migrationهای نسخهٔ ۷ و نصب‌کنندهٔ `school` روی این پروژه اجرا نشدند.
 
-این SQL حساب، Password، TOTP یا داده‌های آموزشی فعلی را بازسازی نمی‌کند. توابع موجود `chatgpt-api`، `chatgpt-mcp` و `consent-location` حفظ می‌شوند. Backend جدید فقط پس از نصب SQL، با `SYSTEM_DB_SCHEMA=public` مستقر می‌شود؛ تنظیمات Auth، کلیدهای پروژه و سیاست‌های جاری سایت حفظ می‌شوند. راهنمای فنی و وضعیت مراحل در [MIGRATION.md](MIGRATION.md) آمده است.
+داده‌های ۵۲ جدول قبلی مدرسه، شش حساب Auth و یک عامل MFA و تعریف‌ها/مجوزهای قبلی پیش و پس از نصب مقایسه و حفظ شدند. Snapshot خصوصی بازیابی و نسخهٔ تابع‌های قدیمی خارج از Git با دسترسی محدود نگه‌داری شدند؛ اینها Backup کامل Auth یا Backup مدیریت‌شده/PITR نیستند. تنظیم Backup قابل‌بازیابی برای نگه‌داری تولید همچنان لازم است.
+
+این SQL حساب، Password، TOTP یا داده‌های آموزشی فعلی را بازسازی نکرد. Backend جدید با `SYSTEM_DB_SCHEMA=public` مستقر است؛ بدنهٔ توابع موجود `chatgpt-api`، `chatgpt-mcp` و `consent-location` با نسخهٔ قبلی برابر و تنظیمات Auth، کلیدها و سیاست‌های جاری مدرسه محفوظ‌اند. cleanup ساعتی فعال و یادآوری قبلی حفظ شده است. Client یا Token واقعی اتصال هنوز ساخته نشده است. راهنمای فنی و وضعیت مراحل در [MIGRATION.md](MIGRATION.md) آمده است.
 
 ## استفاده از مدیر موجود
 

@@ -1,6 +1,6 @@
 # Delivery status — 2026-10-10
 
-کد روی شاخهٔ `feature/secure-chatgpt-oauth` در GitHub است: [PR #12](https://github.com/mozdbaranarshiya/system/pull/12). شاخه هنوز به `main` ادغام نشده و قابلیت جدید روی مدرسهٔ واقعی فعال نشده است. مالک درخواست کرده SQL را در SQL Editor اجرا کند؛ موفقیت آن هنوز تأیید نشده است. پروژهٔ انتخاب‌شده `efibfevyiepkwpnobaro` و مدیر موجود آن حفظ می‌شوند.
+کد روی شاخهٔ `feature/secure-chatgpt-oauth` در GitHub است: [PR #12](https://github.com/mozdbaranarshiya/system/pull/12). با دستور جدید مالک برای تکمیل همهٔ کارها، SQL افزایشی روی پروژهٔ واقعی `efibfevyiepkwpnobaro` نصب و هر سه Backend جدید مستقر شدند. شاخه هنوز به `main` ادغام نشده و انتشار رابط در حال تکمیل است. مدیر، حساب‌ها و داده‌های موجود حفظ می‌شوند؛ اتصال واقعی ChatGPT هنوز به Client و callback پلتفرم نیاز دارد.
 
 [دانلود ZIP موقت](https://github.com/mozdbaranarshiya/system/releases/download/system-school-plugin-20261010-2019ae0/system-school-plugin-20261010.zip) و [Checksum](https://github.com/mozdbaranarshiya/system/releases/download/system-school-plugin-20261010-2019ae0/system-school-plugin-20261010.zip.sha256) منتشر و با دانلود عمومی دوباره بررسی شدند. آرشیو از Commit `2019ae002bff477335de1336dae32a05b759af58` است؛ خود Git tag نیز با همین Commit تطبیق داده شد. شش فایل، ۱۳٬۵۵۹ بایت و SHA-256 `d22dd4e6ba7063ca58d81d8e0b5bfe26292f965d2469d5a81e4e63e41b780345` دارد. ZIP در Git history قرار نگرفته و تا درخواست بعدی مالک حذف نمی‌شود.
 
@@ -72,11 +72,11 @@
 
 ## Database changes
 
-SQL افزایشی آمادهٔ اجراست: [source-oauth-setup.sql](../supabase/source-oauth-setup.sql). در یک تراکنش، هفت جدول خصوصی با RLS، RPCهای فقط-service، لغو/cleanup/Audit و کنترل Session/عامل جاری مدیر را اضافه و ACL guard موجود را اصلاح می‌کند. SHA-256 فایل `4881d262153993be15246d64de38f0dbb1500e821ef80e1d10e5150487854ca7` است. حساب، Password، TOTP و داده‌های فعلی بازسازی نمی‌شوند. SQL هنوز روی مدرسهٔ انتخاب‌شده اعمال نشده است. نصب جداگانهٔ مدرسه در پروژهٔ آماده‌باش از این مرحله مستقل است.
+SQL افزایشی [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) با SHA-256 `4881d262153993be15246d64de38f0dbb1500e821ef80e1d10e5150487854ca7` روی مدرسهٔ واقعی نصب شد؛ دوباره اجرا نشود. هفت جدول خصوصی با RLS، RPCهای فقط-service، لغو/cleanup/Audit، کنترل Session/عامل جاری مدیر و ACL اصلاح‌شدهٔ guard برقرارند. مقایسهٔ قبل/بعد، دادهٔ تمام ۵۲ جدول مدرسه، fingerprint شش حساب Auth و یک عامل MFA، بدنهٔ تابع‌های قبلی و ساختار/ACL/RLS/Policyهای قبلی را تأیید کرد. Job ساعتی OAuth و Job پانزده‌دقیقه‌ای یادآوری قبلی فعال‌اند. بازیابی خصوصی داده‌ها/تعاریف مدرسه و کد قبلی دو تابع مدیریتی با مجوز ۶۰۰ خارج Git ذخیره شده است؛ Auth secret خام export نشد. پروژه Backup مدیریت‌شده یا PITR فعال ندارد؛ این snapshot جایگزین Backup کامل Auth نیست. نصب جداگانهٔ آماده‌باش از این مرحله مستقل است.
 
 ## OAuth endpoints
 
-Base نهایی: `https://efibfevyiepkwpnobaro.supabase.co/functions/v1/oauth-connector`؛ تا SQL و استقرار، URL نهایی تأیید عملکرد نیست.
+Base مستقر: `https://efibfevyiepkwpnobaro.supabase.co/functions/v1/oauth-connector`؛ تابع OAuth نسخهٔ ۱، مدیریت کاربران نسخهٔ ۸ و امنیت حساب نسخهٔ ۴ `ACTIVE` هستند. ۲۷ بررسی واقعی HTTP امنیت/رد درخواست موفق است؛ ورود حساب واقعی و callback ChatGPT آزموده نشده‌اند.
 
 | مسیر | کاربرد |
 | --- | --- |
@@ -123,18 +123,19 @@ SQL واقعی با PGlite، مرزهای HTTP/Auth، Consent/Connected Apps، S
 | Excel از دامنهٔ جایگزین | فایل واقعی، فارسی، RTL، کد ملی رشته‌ای با صفر آغازین و نمرهٔ صفر؛ SHA رسمی حفظ شد |
 | تست‌های تخصصی قبلاً اجراشده در این کار | سه Deno type check، ۲۶ هم‌زمانی PostgreSQL واقعی و ۱۸ Password/TOTP واقعی GoTrue محلی موفق؛ در این مرحله بدون تغییر کد آنها تکرار نشدند |
 | انتشار ZIP | GitHub Actions run `38064167509` موفق؛ دانلود عمومی، checksum، محتوا، CRC و Git tag بررسی شدند |
+| Backend واقعی مدرسه | ۲۷ بررسی رد Token/Client/Grant نامعتبر، Origin/CORS/Header، API محافظت‌شده، RPCهای فقط-service و Schema خصوصی؛ Client/Grant/Access/Refresh واقعی صفر و ثبت Client بدون MFA انجام نشد |
 
 Playwright در اجرای اولیه دنبال Browser cache غایب بود؛ با Chromium نصب‌شده و مسیر مستند محیط، هر دو suite کامل موفق شدند. نصب جدید یا غیرفعال‌کردن Assertion لازم نشد.
 
 ## Remaining risks
 
-SQL/استقرار روی مدرسهٔ واقعی، انتشار `main`/سایت، callback واقعی و آزمون نهایی دانش‌آموز/دبیر/مدیر در ChatGPT باقی مانده‌اند. Upload ZIP و تزریق امن OAuth Token در ChatGPT Plugins تأیید نشده‌اند؛ این ZIP بستهٔ Integration/Setup است و broker اتصال خودکار/refresh ندارد. مسیر مستند قابل‌تنظیم GPT Actions است. گواهی conformance و Audit امنیتی بیرونی برای Provider اختصاصی انجام نشده است.
+SQL و Backend روی مدرسهٔ واقعی آماده‌اند؛ انتشار `main`/سایت در حال تکمیل است. callback واقعی و آزمون نهایی دانش‌آموز/دبیر/مدیر در ChatGPT باقی مانده‌اند. Upload ZIP و تزریق امن OAuth Token در ChatGPT Plugins تأیید نشده‌اند؛ این ZIP بستهٔ Integration/Setup است و broker اتصال خودکار/refresh ندارد. مسیر مستند قابل‌تنظیم GPT Actions است. گواهی conformance و Audit امنیتی بیرونی برای Provider اختصاصی انجام نشده است. Backup کامل مدیریت‌شده/PITR پروژه نیز در بررسی فعال نبود.
 
-یافته‌های مرتبط موجود جداگانه: `service_role` فعلاً مجوز اجرای guard فعلی را ندارد؛ SQL آماده این مانع را رفع می‌کند. Adapterهای ChatGPT قدیمی Scope واقعی Token و عامل/Session جاری مدیر را مانند Provider جدید کنترل نمی‌کنند؛ قبل از فعال‌کردن مسیر بومی به اصلاح و آزمون مستقل نیاز دارند. RLS گستردهٔ classes و بعضی مجوزهای تاریخی تکلیف با شرط Resource اضافی در API جدید محدود شدند؛ hardening کل Data API قدیمی جداست. GitHub Pages Header سفارشی `frame-ancestors` فراهم نمی‌کند؛ CSP meta این حفاظت را جایگزین نمی‌کند. جزئیات در بخش Security concerns در [OAUTH.md](OAUTH.md).
+یافته‌های مرتبط موجود جداگانه: مانع اجرای guard برای `service_role` با نصب SQL رفع شد و بدنهٔ guard حفظ شده است. Adapterهای ChatGPT قدیمی Scope واقعی Token و عامل/Session جاری مدیر را مانند Provider جدید کنترل نمی‌کنند؛ قبل از فعال‌کردن مسیر بومی به اصلاح و آزمون مستقل نیاز دارند. سه تابع قدیمی حفظ شدند و fingerprint بستهٔ کد آنها با قبل برابر است؛ تغییر شمارهٔ نسخهٔ آنها نتیجهٔ اعمال تنظیمات Runtime است. RLS گستردهٔ classes و بعضی مجوزهای تاریخی تکلیف با شرط Resource اضافی در API جدید محدود شدند؛ hardening کل Data API قدیمی جداست. GitHub Pages Header سفارشی `frame-ancestors` فراهم نمی‌کند؛ CSP meta این حفاظت را جایگزین نمی‌کند. جزئیات در بخش Security concerns در [OAUTH.md](OAUTH.md).
 
 ## Production configuration required
 
-مالک با Backup قابل‌بازیابی، SQL آماده را یک‌بار در [SQL Editor پروژهٔ فعلی](https://supabase.com/dashboard/project/efibfevyiepkwpnobaro/sql/new) با نقش `postgres` اجرا کند. نتیجهٔ موفق: `oauth_tables=7`, `oauth_rls_tables=7`, `service_guard_allowed=true`, `manager_session_guard_ready=true`. پس از بررسی catalog، سه تابع `oauth-connector`, `admin-user`, `account-security` با Project ref صریح مستقر و سپس رابط منتشر شوند؛ سایر تابع‌ها/کاربران/داده‌ها حفظ می‌شوند.
+نصب همین پروژه انجام شده؛ SQL آماده دوباره اجرا نشود. نتیجهٔ تأییدشده: `oauth_tables=7`, `oauth_rls_tables=7`, `service_guard_allowed=true`, `manager_session_guard_ready=true`. سه تابع `oauth-connector`, `admin-user`, `account-security` با Project ref صریح مستقر شدند و سایر تابع‌ها/کاربران/داده‌ها حفظ‌اند. مرحلهٔ جاری انتشار رابط است؛ سپس Client واقعی با MFA مدیر ثبت می‌شود.
 
 `SYSTEM_DB_SCHEMA=public`، `OAUTH_SITE_URL=https://mozdbaranarshiya.github.io/system/index.html`، `OAUTH_ALLOWED_ORIGINS=https://mozdbaranarshiya.github.io`، `OAUTH_ALLOW_LOCAL_HTTP=false` و کلیدهای server-only فراهم‌شده توسط Runtime همان پروژه لازم‌اند. Schemaهای خصوصی expose نشوند و cleanup، Audit/Backup و Headerها طبق [MIGRATION.md](MIGRATION.md) تنظیم شوند. هیچ Secret در ZIP یا مرورگر قرار نمی‌گیرد. تنظیمات startup محیط توسعه نیز در Draft ذخیره شده‌اند؛ Save/Publish محیط با انتشار سایت و SQL یکسان نیست.
 

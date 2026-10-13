@@ -2,17 +2,21 @@
 
 انتخاب فعلی مالک **`efibfevyiepkwpnobaro`** است؛ سایت و داده‌های واقعی مدرسه روی همین پروژه می‌مانند. این انتخاب جایگزین تصمیم قبلی به راه‌اندازی مدرسهٔ تازه در `pukanizbahswrupscfmg` شده است. حساب جدید یا انتقال داده لازم نیست و پروژهٔ آماده‌باش حذف یا بازنصب نمی‌شود.
 
-## وضعیت بررسی‌شده — ۲۰۲۶-۱۰-۰۹
+## وضعیت بررسی‌شده — ۲۰۲۶-۱۰-۱۰
 
 بررسی فقط‌خواندنی پروژهٔ فعلی، یک مدیر فعال با رمز تغییرکرده و TOTP تأییدشده، دو دبیر، سه دانش‌آموز و داده‌های آموزشی واقعی را نشان داد. همان هویت‌های Supabase Auth، UUIDها، پروفایل‌ها و روابط منابع حفظ می‌شوند. از مدیر موجود برای MFA، ثبت Client و Consent استفاده می‌شود؛ ساخت مدیر نخست یا اجرای SQL درج پروفایل جزو این استقرار نیست.
 
 تابع‌های زندهٔ `chatgpt-api`، `chatgpt-mcp` و `consent-location` بررسی و حفظ می‌شوند. Provider OAuth بومی پروژه غیرفعال و فاقد Client ثبت‌شده است؛ وجود تابع‌های قدیمی به‌تنهایی جریان کامل اتصال حساب با MFA، Consent، کد یک‌بارمصرف و scopeهای آموزشی را فراهم نمی‌کند. `oauth-connector` جریان افزایشی را به Auth و مجوزهای همان مدرسه متصل می‌کند.
 
-اجرای SQL جدید روی پروژهٔ فعلی هنوز تأیید نشده و استقرار تابع‌های این تغییر در آن باقی مانده است. تابع‌های جدید تاکنون فقط در پروژهٔ آماده‌باش مستقر و آزموده شده‌اند. تغییرات شاخه هنوز به `main` و سایت منتشرشده منتقل نشده‌اند؛ ورود واقعی با این قابلیت، callback و اتصال ChatGPT هنوز پذیرش نهایی ندارند.
+بستهٔ SQL افزایشی با مجوز مالک روی پروژهٔ فعلی اجرا و نتیجهٔ واقعی تأیید شد: هفت جدول `system_oauth` با RLS، اجازهٔ service برای guard قبلی و RPC کنترل Session مدیر نصب هستند. مقایسهٔ قبل/بعد، داده‌های هر ۵۲ جدول قبلی `public`، Hash شش حساب Auth و یک عامل MFA، بدنهٔ تابع‌های قدیمی و تعریف ستون‌ها، Indexها، Constraintها، RLS، ACL و Policyهای قبلی را بدون تغییر نشان داد. تغییر جدید ACL، فقط اجازهٔ اجرای guard برای `service_role` است.
 
-## SQL افزایشی برای مالک
+تابع‌های `oauth-connector` نسخهٔ ۱، `admin-user` نسخهٔ ۸ و `account-security` نسخهٔ ۴ با وضعیت `ACTIVE` مستقرند. ۲۷ بررسی HTTP واقعی، رد Client/Token/Code نامعتبر، Refresh/Revoke نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، RPCهای محدود و schema خصوصی و رد درخواست مدیریتی بدون احراز هویت را تأیید کردند. این بررسی‌ها شامل ورود مثبت با Password/TOTP کاربر مدرسه یا callback واقعی ChatGPT نبودند. شمارش Client، Grant، Access Token و Refresh Token اتصال صفر است؛ حساب یا مجوز نمایشی برای دورزدن MFA ساخته نشده است.
 
-ابتدا Backup قابل‌بازیابی بگیرید. [SQL Editor پروژهٔ فعلی](https://supabase.com/dashboard/project/efibfevyiepkwpnobaro/sql/new) را با نقش `postgres` باز کنید و شناسهٔ پروژه را پیش از اجرا کنترل کنید. فایل آمادهٔ [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) را کامل کپی و **یک‌بار** اجرا کنید. این بسته شامل موارد زیر در یک تراکنش است:
+بدنهٔ کد تابع‌های دیگر `chatgpt-api`، `chatgpt-mcp` و `consent-location` با Hash نسخهٔ پیش از استقرار برابر است. شمارهٔ نسخهٔ آنها بر اثر اعمال تنظیمات سفارشی پروژه به‌صورت خودکار تغییر کرد؛ کدشان جایگزین نشد. انتشار رابط هنوز در حال تکمیل است و وضعیت نهایی در [DELIVERY_STATUS.md](DELIVERY_STATUS.md) ثبت می‌شود. اتصال واقعی ChatGPT پذیرش نهایی ندارد.
+
+## بستهٔ SQL اعمال‌شده
+
+فایل [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) روی `efibfevyiepkwpnobaro` یک‌بار اجرا شده است و نباید دوباره روی همین پروژه اجرا شود. بسته شامل موارد زیر در یک تراکنش بود:
 
 | ترتیب | منبع | تغییر |
 | --- | --- | --- |
@@ -20,9 +24,11 @@
 | ۲ | [20261009_manager_session_guard.sql](../supabase/migrations/20261009_manager_session_guard.sql) | RPC فقط-service برای کنترل Session و عامل TOTP جاری مدیر |
 | ۳ | مجوز اجرایی بستهٔ SQL | `grant execute on function public.oauth_postgrest_guard() to service_role;` برای اجرای guard موجود در درخواست PostgREST خدمت |
 
-فایل پایهٔ `schema.sql`، چهار Migration نسخهٔ ۷، نصب‌کنندهٔ `school` و فایل ساخت مدیر روی پروژهٔ فعلی اجرا نمی‌شوند. Migration OAuth نصب اولیه است؛ اجرای دوباره روش upgrade یا رفع خطا نیست. اگر اجرا خطا داد، تراکنش متوقف می‌شود و پیش از هر تلاش بعدی باید خطا و catalog بررسی شوند. حساب‌ها، Passwordها، عوامل MFA و داده‌های آموزشی موجود بازسازی یا پاک نمی‌شوند.
+خروجی واقعی `oauth_tables=7`، `oauth_rls_tables=7`، `service_guard_allowed=true` و `manager_session_guard_ready=true` بود. فایل پایهٔ `schema.sql`، چهار Migration نسخهٔ ۷، نصب‌کنندهٔ `school` و فایل ساخت مدیر اجرا نشدند. حساب‌ها، Passwordها، عوامل MFA و داده‌های آموزشی موجود بازسازی یا پاک نشدند. Migration OAuth نصب اولیه است؛ اجرای دوباره روش upgrade یا رفع خطا نیست.
 
-پس از موفقیت SQL، وجود هفت جدول OAuth با RLS، ACL تابع‌های service-only، Triggerهای لغو دسترسی، مدیر موجود و شمارش داده‌های قبلی بررسی شوند. `system_oauth` و `system_private` در Data API expose نشوند. اگر `pg_cron` موجود باشد Migration Job ساعتی `system-oauth-cleanup` را می‌سازد؛ در غیر این صورت scheduler مورداعتماد باید `select public.oauth_cleanup();` را با نقش مالک یا service هر ساعت اجرا کند. انقضای توکن در هر درخواست کنترل می‌شود و به cleanup وابسته نیست.
+پیش از نصب، Snapshot خصوصی داده‌های مرتبط و نسخهٔ قابل‌بازیابی تابع‌های قدیمی `admin-user` و `account-security` خارج از Git با مجوز فایل `600` تهیه شدند. این Snapshot، Backup کامل دیتابیس/Auth و جایگزین Backup مدیریت‌شده نیست. در API مدیریت، Backup یا PITR قابل‌دسترسی مشاهده نشد؛ برنامهٔ Backup قابل‌بازیابی و آزمون Restore برای نگه‌داری تولید باید برقرار شود. اطلاعات خصوصی Snapshot وارد مخزن، ZIP یا مستندات نشده‌اند.
+
+وجود هفت جدول OAuth با RLS، مجوز guard و کنترل Session مدیر پس از اجرا تأیید شد. اجرای RPCهای OAuth برای `anon` و RPC اثبات MFA مدیر برای کاربر عادی مجاز نیست. `system_oauth` و `system_private` در Data API expose نشوند. Job فعال `system-oauth-cleanup` با برنامهٔ `17 * * * *` دستور `select public.oauth_cleanup()` را ساعتی اجرا می‌کند؛ Job یادآوری قبلی مدرسه نیز فعال و حفظ شده است. انقضای توکن در هر درخواست کنترل می‌شود و به cleanup وابسته نیست.
 
 تولید دوبارهٔ artifact برای بازبینی محلی با [prepare-source-oauth.mjs](../supabase/prepare-source-oauth.mjs) انجام می‌شود:
 
@@ -45,7 +51,7 @@ OAUTH_ALLOW_LOCAL_HTTP=false
 
 کلیدهای `SUPABASE_*` را runtime همان پروژه فراهم می‌کند. کلیدهای فعلی، تنظیمات سراسری Auth، Passwordها، Sessionها، MFA و سیاست‌های مدرسه در این مرحله حفظ می‌شوند؛ تغییر کلید یا غیرفعال‌کردن Provider دیگری جزو این استقرار نیست. Secret و Service Role در مخزن، مرورگر یا ChatGPT قرار نمی‌گیرند.
 
-`oauth-connector`، `admin-user` و `account-security` جداگانه با شناسهٔ صریح `efibfevyiepkwpnobaro` و `--no-verify-jwt` مستقر شوند. هر سه JWT دقیق کاربر را از Supabase Auth معتبر می‌کنند و `verify_jwt=false` در `supabase/config.toml` برای همین کنترل صریح ثبت شده است. OAuth علاوه بر JWT سایت، code exchange و توکن opaque را با مرز مستقل خود بررسی می‌کند. تابع‌های دیگر از جمله `chatgpt-api`، `chatgpt-mcp` و `consent-location` حفظ شوند؛ deploy با `--prune` انجام نشود.
+`oauth-connector`، `admin-user` و `account-security` جداگانه روی `efibfevyiepkwpnobaro` با `verify_jwt=false` مستقر شده‌اند؛ همین تنظیم برای استقرارهای بعدی با `--no-verify-jwt` و شناسهٔ صریح پروژه استفاده شود. هر سه JWT دقیق کاربر را از Supabase Auth معتبر می‌کنند. OAuth علاوه بر JWT سایت، code exchange و توکن opaque را با مرز مستقل خود بررسی می‌کند. تابع‌های دیگر از جمله `chatgpt-api`، `chatgpt-mcp` و `consent-location` حفظ شوند؛ deploy با `--prune` انجام نشود.
 
 در مدیریت کاربران و تغییر رمز مدیر، معتبرشدن JWT به‌تنهایی کافی نیست. RPC `public.assert_manager_session` فعال‌بودن مدیر و Auth، Session جاری AAL2 و عامل TOTP تأییدشدهٔ دقیق همان Session را بررسی می‌کند. حذف/انقضای Session، حذف عامل، downgrade یا خطای بررسی باعث رد عملیات می‌شود. سیاست AAL2 فعلی این عملیات حفظ می‌شود؛ فقط اتصال و مدیریت OAuth به TOTP تازه در ۱۰ دقیقهٔ گذشته نیاز دارد. قابلیت‌های موجود مدیریت کاربران و تغییر رمز حفظ می‌شوند؛ تغییر رمز اولیهٔ خود مدیر پس از MFA معتبر همچنان مجاز است.
 

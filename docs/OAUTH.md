@@ -8,7 +8,7 @@
 
 فایل‌های مرتبط: `app.js`، `js/auth.js`، `js/core.js`، `index.html`، `supabase/schema.sql`، migrationهای نسخهٔ ۷ و `supabase/functions/account-security/` و `admin-user/`. تست‌های موجود از PGlite، JSDOM، Node و Playwright استفاده می‌کنند. Audit موجود immutable است؛ خطاهای جدید JSON استاندارد و بدون جزئیات داخلی‌اند.
 
-استقرار فعلی برای پروژهٔ موجود **`efibfevyiepkwpnobaro`** است. مدیر واقعی فعال با رمز تغییرکرده و TOTP تأییدشده و داده‌های دانش‌آموزان و دبیران از قبل وجود دارند؛ همان حساب‌ها، Sessionها و مجوزها استفاده می‌شوند. schema مدرسه `public` و Bucket تکلیف `assignment-files` باقی می‌مانند. اجرای SQL افزایشی توسط مالک هنوز تأیید نشده و استقرار تابع‌های جدید و انتشار رابط در این پروژه باقی مانده‌اند؛ تست‌های محلی تأیید اتصال واقعی ChatGPT نیستند.
+استقرار فعلی برای پروژهٔ موجود **`efibfevyiepkwpnobaro`** است. مدیر واقعی فعال با رمز تغییرکرده و TOTP تأییدشده و داده‌های دانش‌آموزان و دبیران از قبل وجود دارند؛ همان حساب‌ها، Sessionها و مجوزها استفاده می‌شوند. schema مدرسه `public` و Bucket تکلیف `assignment-files` باقی می‌مانند. SQL افزایشی و هر سه تابع Backend نصب و حفظ داده‌ها و تعریف‌های قبلی بررسی شده‌اند؛ انتشار رابط هنوز در حال تکمیل است. ورود مثبت واقعی و callback ChatGPT هنوز آزموده نشده‌اند.
 
 ## Architecture implemented
 
@@ -71,7 +71,7 @@ Supabase مسئول حفاظت TOTP secret، بررسی OTP، challenge expirati
 
 ## OAuth endpoints
 
-همهٔ مسیرهای استقرار انتخاب‌شده زیر `https://efibfevyiepkwpnobaro.supabase.co/functions/v1/oauth-connector` هستند. تا تأیید اجرای SQL و استقرار تابع جدید روی همین پروژه، این جدول وضعیت فعال‌سازی واقعی را تأیید نمی‌کند.
+همهٔ مسیرهای استقرار انتخاب‌شده زیر `https://efibfevyiepkwpnobaro.supabase.co/functions/v1/oauth-connector` هستند. SQL و تابع مربوط نصب و مرزهای درخواست نامعتبر در HTTP واقعی آزموده شده‌اند؛ Client واقعی و چرخهٔ کامل کاربر هنوز پذیرش نهایی ندارند.
 
 | روش / مسیر | کاربرد / حفاظت |
 | --- | --- |
@@ -120,6 +120,8 @@ RPC منبع با service boundary اجرا می‌شود، بنابراین ن�
 Audit جدید فقط Event، شناسهٔ داخلی، Client و Scope را ثبت می‌کند؛ Password، state، code، token، hash token، client secret، OTP و TOTP secret وارد Audit نمی‌شوند. رویدادهای امنیتی `OAUTH_*` در Audit فعلی مدیر قابل مشاهده‌اند. نگه‌داری و cleanup دوره‌ای اطلاعات خصوصی در migration مستند شده است.
 
 اگر `pg_cron` از قبل نصب باشد migration کار ساعتی cleanup را ثبت می‌کند. در غیر این صورت scheduler مورداعتماد باید `select public.oauth_cleanup();` را برای نصب اصلی یا `select school.oauth_cleanup();` را برای نصب مستقل با نقش مالک دیتابیس یا service اجرا کند. این RPC برای `anon` و `authenticated` مجاز نیست. tombstoneهای refresh مصرف‌شده تا پایان مهلت خانواده حفظ می‌شوند تا cleanup تشخیص reuse را دور نزند؛ نگه‌داری Audit تابع سیاست موجود مدرسه است.
+
+در مدرسهٔ فعلی، `system-oauth-cleanup` با برنامهٔ `17 * * * *` فعال و Job یادآوری قبلی حفظ شده است. بررسی catalog، RLS هر هفت جدول خصوصی و عدم اجازهٔ اجرای مستقیم RPCهای OAuth برای `anon` و اثبات MFA مدیر برای کاربر عادی را نیز تأیید کرد.
 
 ## Client registration / ChatGPT connection
 
@@ -185,8 +187,9 @@ DENO_DIR=/tmp/system-deno-cache XDG_CACHE_HOME=/tmp/system-deno-cache npm exec -
 | Syntax / Deno type check / whitespace | موفق؛ frontend مرحلهٔ build مستقل ندارد |
 | OpenAPI | YAML و ۴ operation خواندن، scopeها و تمام referenceهای داخلی بررسی شدند |
 | HTTP واقعی آماده‌باش `pukanizbahswrupscfmg` | ۲۱ بررسی رد درخواست نامعتبر/توکن نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، schema خصوصی و RPC فقط-service موفق؛ بدون ورود کاربر واقعی یا callback ChatGPT؛ پذیرش پروژهٔ انتخاب‌شده نیست |
+| HTTP واقعی مدرسهٔ `efibfevyiepkwpnobaro` | ۲۷ بررسی رد Client/Token/Code و Refresh/Revoke نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، schema خصوصی/RPC محدود و مدیریت بدون احراز هویت موفق؛ بدون Password/TOTP مثبت کاربر مدرسه یا callback ChatGPT |
 
-این suiteها حساب، داده یا Client واقعی تولید/ChatGPT نمی‌سازند. تصویر رسمی GoTrue و PostgreSQL محلی با digest ثابت استفاده شدند و منابع Docker متعلق به تست پاک شدند. نصب آماده‌باش از استقرار مدرسهٔ موجود جداست؛ اجرای SQL روی `efibfevyiepkwpnobaro` هنوز تأیید نشده و Backend و رابط جدید آن باقی مانده‌اند. مراحل مالک در [MIGRATION.md](MIGRATION.md) ثبت شده‌اند. پذیرش نهایی با Client واقعی، callback ثبت‌شده و همان حساب‌های مدرسه انجام می‌شود.
+این suiteها حساب، داده یا Client واقعی تولید/ChatGPT نمی‌سازند. تصویر رسمی GoTrue و PostgreSQL محلی با digest ثابت استفاده شدند و منابع Docker متعلق به تست پاک شدند. SQL و Backend روی `efibfevyiepkwpnobaro` جداگانه نصب و هفت جدول با RLS، ACL guard و کنترل Session تأیید شدند؛ داده‌های ۵۲ جدول قبلی، شش حساب Auth، یک عامل MFA و تعریف‌ها/مجوزهای قبلی حفظ شدند. انتشار رابط هنوز در حال تکمیل است. شمارش Client/Grant/Access/Refresh اتصال صفر است و توکن یا مجوز نمایشی ساخته نشده است. جزئیات و محدودیت Snapshot خصوصی بازیابی در [MIGRATION.md](MIGRATION.md) آمده‌اند؛ Backup کامل یا مدیریت‌شده ادعا نمی‌شود. پذیرش نهایی با Client واقعی، callback ثبت‌شده و همان حساب‌های مدرسه انجام می‌شود.
 
 ### ابزار استقرار در محیط ابری
 
@@ -196,19 +199,19 @@ DENO_DIR=/tmp/system-deno-cache XDG_CACHE_HOME=/tmp/system-deno-cache npm exec -
 SUPABASE_HOME=/tmp/system-supabase-cli-state SUPABASE_TELEMETRY_DISABLED=1 SUPABASE_NO_KEYRING=1 npm exec --cache /tmp/system-npm-cache --yes --package=supabase@2.120.0 -- supabase --version
 ```
 
-در این محیط، مقدار محلی Credential واسط را CLI هنگام بررسی قالب رد می‌کند، در حالی که درخواست احراز‌شدهٔ HTTPS به Management API رسمی مجاز است. استقرار آماده‌باش با endpoint رسمی multipart همان Management API انجام شد؛ این تفاوت، نشانهٔ نامعتبر بودن دسترسی مدیریتی یا نیاز به فرستادن توکن در چت نیست. استقرار پروژهٔ فعلی پس از تأیید اجرای SQL توسط مالک انجام می‌شود؛ وضعیت در [MIGRATION.md](MIGRATION.md) آمده است.
+در این محیط، مقدار محلی Credential واسط را CLI هنگام بررسی قالب رد می‌کند، در حالی که درخواست احراز‌شدهٔ HTTPS به Management API رسمی مجاز است. استقرار با endpoint رسمی multipart همان Management API انجام شد؛ این تفاوت، نشانهٔ نامعتبر بودن دسترسی مدیریتی یا نیاز به فرستادن توکن در چت نیست. `oauth-connector` نسخهٔ ۱، `admin-user` نسخهٔ ۸ و `account-security` نسخهٔ ۴ روی پروژهٔ فعلی `ACTIVE` هستند؛ وضعیت در [MIGRATION.md](MIGRATION.md) آمده است.
 
 Credential مدیریتی را فقط در Secrets محیط با مقصد `api.supabase.com` فراهم کنید. در این محیط `SUPABASE_SOURCE_ACCESS_TOKEN` متعلق به پروژهٔ فعلی و `SUPABASE_ACCESS_TOKEN` متعلق به آماده‌باش است؛ درخواست مدیریت باید صریحاً پروژهٔ درست را هدف بگیرد. public key سایت برای migration یا deploy کافی نیست. دسترسی شبکه به `api.github.com` برای PR، `api.supabase.com` برای مدیریت، `efibfevyiepkwpnobaro.supabase.co` برای آزمون تابع فعلی و دامنهٔ سایت برای کنترل انتشار لازم است. نسخه و help ابزار تأیید شده‌اند؛ داشتن CLI یا انتشار محیط به معنی اجراشدن migration/deploy تولید نیست.
 
 توکن مدیریتی محدودشده باید برای پروژهٔ مقصد مجوزهای `project_admin_read`، `database_read`/`database_write`، `edge_functions_read`/`edge_functions_write` و `edge_functions_secrets_read`/`edge_functions_secrets_write` داشته باشد. این نام‌ها از [OpenAPI رسمی Management API](https://api.supabase.com/api/v1-json) قابل بررسی‌اند. حضور متغیر در محیط کافی نیست؛ پاسخ `403` با نام مجوزِ مفقود، نیازمند اصلاح دسترسی همان توکن است. برای این استقرار مجوز حذف پروژه، مدیریت کلیدهای API یا دسترسی به همهٔ پروژه‌ها لازم نیست.
 
-برای مدرسهٔ موجود، مالک فایل آمادهٔ [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) را پس از Backup، در SQL Editor پروژهٔ `efibfevyiepkwpnobaro` با نقش `postgres` یک‌بار اجرا می‌کند. بسته پیش‌نیازهای v7، مدیر موجود، guard فعلی و نبود نصب جدید قبلی را بررسی و دو Migration جدید `20261007_oauth_connector.sql` و `20261009_manager_session_guard.sql` و مجوز execute guard برای `service_role` را در یک تراکنش اجرا می‌کند. فایل پایه، Migrationهای قبلی و نصب‌کنندهٔ `school` اجرا نمی‌شوند. حساب‌ها و داده‌ها بازسازی نمی‌شوند؛ جزئیات و دستور تولید دوبارهٔ artifact در [MIGRATION.md](MIGRATION.md) آمده‌اند. اجرای دوبارهٔ بسته روش upgrade نیست.
+فایل آمادهٔ [source-oauth-setup.sql](../supabase/source-oauth-setup.sql) با مجوز مالک روی `efibfevyiepkwpnobaro` اعمال شده است؛ آن را روی این پروژه دوباره اجرا نکنید. بسته پیش‌نیازهای v7، مدیر موجود، guard فعلی و نبود نصب جدید قبلی را بررسی و دو Migration جدید `20261007_oauth_connector.sql` و `20261009_manager_session_guard.sql` و مجوز execute guard برای `service_role` را در یک تراکنش اعمال کرد. فایل پایه، Migrationهای قبلی و نصب‌کنندهٔ `school` اجرا نشدند و حساب‌ها و داده‌ها بازسازی نشدند. جزئیات و دستور تولید دوبارهٔ artifact برای بازبینی محلی در [MIGRATION.md](MIGRATION.md) آمده‌اند.
 
 برای Edge Functions، `.env.example` فقط placeholder دارد. فایل واقعی `.env` ignored است و باید خارج از Git، با دسترسی محدود نگه‌داری شود. `supabase functions serve oauth-connector --no-verify-jwt --env-file PATH_TO_LOCAL_ENV` در محیط Supabase محلی؛ برای localhost فقط `OAUTH_ALLOW_LOCAL_HTTP=true` و Client callback محلی دقیق مجاز است. frontend هم config عمومی همان پروژهٔ آزمایشی را لازم دارد؛ service key هرگز در `config.js` قرار نمی‌گیرد.
 
 ## Production configuration required
 
-1. Backup و اجرای دستی بستهٔ SQL افزایشی توسط مالک روی `efibfevyiepkwpnobaro`؛ سپس تأیید catalog و حفظ داده‌های قبلی. تا این تأیید، تابع‌های جدید روی پروژهٔ فعلی مستقر و رابط منتشر نشوند.
+1. SQL افزایشی روی `efibfevyiepkwpnobaro` نصب و catalog و حفظ داده‌های قبلی تأیید شده‌اند؛ بسته دوباره اجرا نشود. برای تغییرات بعدی، Backup کامل قابل‌بازیابی و آزمون Restore لازم‌اند؛ Snapshot خصوصی این نصب جایگزین Backup مدیریت‌شده نیست.
 2. `SUPABASE_URL` و کلید public و service همان پروژه در Edge runtime موجود باشند؛ در Supabase میزبانی‌شده این مقدارها معمولاً از runtime فراهم می‌شوند و لازم نیست Secret رزروشده با پیشوند `SUPABASE_` دوباره ثبت شود. متغیرهای modern `SUPABASE_PUBLISHABLE_KEYS`/`SUPABASE_SECRET_KEYS` JSON هم پشتیبانی می‌شوند. service key هیچ‌گاه در Git/ChatGPT/Browser نباشد. `SYSTEM_DB_SCHEMA=public` و `OAUTH_*` را برای این استقرار پیکربندی کنید؛ `.env.example` فقط placeholder است. schema تنها تنظیم مورداعتماد سرور است و از Client دریافت نمی‌شود؛ نام نامعتبر درخواست را متوقف می‌کند. namespaceهای خصوصی هرگز expose نشوند. کلیدها و تنظیمات سراسری Auth و سیاست‌های مدرسه حفظ شوند.
 3. `OAUTH_SITE_URL` آدرس کامل HTTPS صفحهٔ اصلی واقعی، بدون Query/Fragment؛ `OAUTH_ALLOWED_ORIGINS` فهرست Originهای HTTPS دقیق با کاما و بدون path، wildcard یا slash آخر. `OAUTH_ALLOW_LOCAL_HTTP=false`.
 4. هر سه تابع `oauth-connector`، `admin-user` و `account-security` پس از نصب SQL با `--no-verify-jwt --project-ref efibfevyiepkwpnobaro` و تنظیم متناظر `supabase/config.toml` مستقر شوند. هر تابع JWT دقیق کاربر را در Supabase Auth اعتبارسنجی می‌کند؛ OAuth مسیرهای token/code عمومی و Bearer opaque را هم با مرز مستقل خود دارد. این تنظیم با کلید Publishable جدید سازگار است و کنترل هویت/مجوز را حذف نمی‌کند. تابع‌های موجود `chatgpt-api`، `chatgpt-mcp` و `consent-location` و منابع آماده‌باش حفظ شوند؛ `--prune` استفاده نشود.
@@ -224,6 +227,6 @@ RLS جدول classes برای کاربران آماده گسترده است؛ AP
 
 این OAuth-compatible provider اختصاصی، اگرچه با تست‌های تراکنشی/امنیتی پوشش داده شده، گواهی conformance یا audit بیرونی OAuth ندارد. پیش از عرضهٔ عمومی دادهٔ آموزشی حساس، بازبینی امنیتی مستقل و آزمون Client واقعی لازم است. محدودیت‌های آزمون شبکه و نتیجهٔ هر suite در گزارش کار به‌صورت جدا ارائه می‌شوند.
 
-بررسی فقط‌خواندنی مدرسهٔ انتخاب‌شده یک مانع استقرار مرتبط نشان داد: `authenticator` از `public.oauth_postgrest_guard()` به‌عنوان pre-request استفاده می‌کند، اما `service_role` اجازهٔ اجرای آن را ندارد. بستهٔ SQL افزایشی این ACL را اصلاح و بدنهٔ guard و منع JWTهای OAuth بومی در Data API را حفظ می‌کند؛ این اصلاح تا اجرای SQL توسط مالک روی مدرسهٔ فعلی اعمال نشده است.
+بررسی اولیهٔ مدرسهٔ انتخاب‌شده یک مانع استقرار مرتبط نشان داد: `authenticator` از `public.oauth_postgrest_guard()` به‌عنوان pre-request استفاده می‌کرد، اما `service_role` اجازهٔ اجرای آن را نداشت. بستهٔ SQL افزایشی این ACL را اصلاح کرد و اجازهٔ execute سرویس پس از نصب تأیید شد؛ بدنهٔ guard و منع JWTهای OAuth بومی در Data API حفظ شدند.
 
 توابع قدیمی `chatgpt-api` و `chatgpt-mcp` نیز بررسی شدند. Adapter قدیمی بر JWT OAuth بومی و Scope رکورد برنامهٔ متصل تکیه دارد؛ Scope صادرشدهٔ Token و Session/عامل جاری مدیر را با سیاست جدید کنترل نمی‌کند. Provider بومی هنگام بررسی غیرفعال و فاقد Client بود. این توابع حفظ شده‌اند، ولی برای اتصال جدید از آنها استفاده نمی‌شود؛ پیش از فعال‌کردن مسیر بومی باید این کنترل‌ها و قرارداد audience آن جداگانه اصلاح و آزموده شوند. آنها Opaque Token این Provider را قبول نمی‌کنند.
