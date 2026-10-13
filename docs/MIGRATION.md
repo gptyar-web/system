@@ -12,7 +12,7 @@
 
 تابع‌های `oauth-connector` نسخهٔ ۱، `admin-user` نسخهٔ ۸ و `account-security` نسخهٔ ۴ با وضعیت `ACTIVE` مستقرند. ۲۷ بررسی HTTP واقعی، رد Client/Token/Code نامعتبر، Refresh/Revoke نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، RPCهای محدود و schema خصوصی و رد درخواست مدیریتی بدون احراز هویت را تأیید کردند. این بررسی‌ها شامل ورود مثبت با Password/TOTP کاربر مدرسه یا callback واقعی ChatGPT نبودند. شمارش Client، Grant، Access Token و Refresh Token اتصال صفر است؛ حساب یا مجوز نمایشی برای دورزدن MFA ساخته نشده است.
 
-بدنهٔ کد تابع‌های دیگر `chatgpt-api`، `chatgpt-mcp` و `consent-location` با Hash نسخهٔ پیش از استقرار برابر است. شمارهٔ نسخهٔ آنها بر اثر اعمال تنظیمات سفارشی پروژه به‌صورت خودکار تغییر کرد؛ کدشان جایگزین نشد. انتشار رابط هنوز در حال تکمیل است و وضعیت نهایی در [DELIVERY_STATUS.md](DELIVERY_STATUS.md) ثبت می‌شود. اتصال واقعی ChatGPT پذیرش نهایی ندارد.
+بدنهٔ کد تابع‌های دیگر `chatgpt-api`، `chatgpt-mcp` و `consent-location` با Hash نسخهٔ پیش از استقرار برابر است. شمارهٔ نسخهٔ آنها بر اثر اعمال تنظیمات سفارشی پروژه به‌صورت خودکار تغییر کرد؛ کدشان جایگزین نشد. رابط از `main` روی [سایت مدرسه](https://mozdbaranarshiya.github.io/system/) منتشر و فایل‌های اصلی آن با نسخهٔ ادغام‌شده مقایسه شدند؛ وضعیت نهایی در [DELIVERY_STATUS.md](DELIVERY_STATUS.md) آمده است. اتصال واقعی ChatGPT پذیرش نهایی ندارد.
 
 ## بستهٔ SQL اعمال‌شده
 
@@ -59,7 +59,7 @@ OAUTH_ALLOW_LOCAL_HTTP=false
 
 تنظیم عمومی سایت باید URL و Publishable Key همان پروژهٔ فعلی را نگه دارد. Database schema برابر `public` و Bucket تکلیف `assignment-files` است؛ مقدارهای پیش‌فرض برنامه همین‌ها هستند. برای این استقرار کلید `SUPABASE_AUTH_STORAGE_KEY` اضافه نشود تا Session موجود از namespace پیش‌فرض SDK ادامه یابد. تنظیمات `school`، `school-assignment-files` یا `system-school-pukan-auth` مربوط به آماده‌باش‌اند.
 
-پس از نصب SQL و استقرار Backend، رابط همین شاخه منتشر شود. مدیر موجود وارد شود؛ Session معتبر نیاز به ورود دوباره با Password ندارد و TOTP تازه با عامل موجود تأیید می‌شود. مدیر callback دقیق ساخته‌شده توسط GPT Builder را در «برنامه‌های متصل» ثبت می‌کند. مراحل در [CHATGPT_SETUP.md](CHATGPT_SETUP.md) آمده‌اند.
+SQL، Backend و رابط `main` منتشر شده‌اند. مدیر موجود وارد [سایت مدرسه](https://mozdbaranarshiya.github.io/system/) شود؛ Session معتبر نیاز به ورود دوباره با Password ندارد و TOTP تازه با عامل موجود تأیید می‌شود. مدیر callback دقیق ساخته‌شده توسط GPT Builder را در «برنامه‌های متصل» ثبت می‌کند. مراحل در [CHATGPT_SETUP.md](CHATGPT_SETUP.md) آمده‌اند.
 
 پیش از اعلام اتصال کامل، Login، MFA تازه و رد Context قدیمی، Consent/deny، PKCE، code single-use، Refresh و Disconnect، دسترسی دانش‌آموز به دادهٔ خودش، تخصیص فعلی دبیر، مجوز واقعی مدیر و تابع‌های قبلی آزموده شوند. نبود Client واقعی یا callback تأییدشده با تست محلی جبران نمی‌شود. برای بازگشت، Backup و نسخهٔ قبلی رابط حفظ شوند؛ حذف حساب، داده یا منابع آماده‌باش روش rollback نیست.
 

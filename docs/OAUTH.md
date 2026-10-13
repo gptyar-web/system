@@ -8,7 +8,7 @@
 
 فایل‌های مرتبط: `app.js`، `js/auth.js`، `js/core.js`، `index.html`، `supabase/schema.sql`، migrationهای نسخهٔ ۷ و `supabase/functions/account-security/` و `admin-user/`. تست‌های موجود از PGlite، JSDOM، Node و Playwright استفاده می‌کنند. Audit موجود immutable است؛ خطاهای جدید JSON استاندارد و بدون جزئیات داخلی‌اند.
 
-استقرار فعلی برای پروژهٔ موجود **`efibfevyiepkwpnobaro`** است. مدیر واقعی فعال با رمز تغییرکرده و TOTP تأییدشده و داده‌های دانش‌آموزان و دبیران از قبل وجود دارند؛ همان حساب‌ها، Sessionها و مجوزها استفاده می‌شوند. schema مدرسه `public` و Bucket تکلیف `assignment-files` باقی می‌مانند. SQL افزایشی و هر سه تابع Backend نصب و حفظ داده‌ها و تعریف‌های قبلی بررسی شده‌اند؛ انتشار رابط هنوز در حال تکمیل است. ورود مثبت واقعی و callback ChatGPT هنوز آزموده نشده‌اند.
+استقرار فعلی برای پروژهٔ موجود **`efibfevyiepkwpnobaro`** است. مدیر واقعی فعال با رمز تغییرکرده و TOTP تأییدشده و داده‌های دانش‌آموزان و دبیران از قبل وجود دارند؛ همان حساب‌ها، Sessionها و مجوزها استفاده می‌شوند. schema مدرسه `public` و Bucket تکلیف `assignment-files` باقی می‌مانند. SQL افزایشی و هر سه تابع Backend نصب و حفظ داده‌ها و تعریف‌های قبلی بررسی شده‌اند؛ رابط از `main` روی [سایت مدرسه](https://mozdbaranarshiya.github.io/system/) منتشر شده و فایل‌های اصلی آن با Commit ادغام‌شده برابرند. ورود مثبت واقعی و callback ChatGPT هنوز آزموده نشده‌اند.
 
 ## Architecture implemented
 
@@ -189,7 +189,7 @@ DENO_DIR=/tmp/system-deno-cache XDG_CACHE_HOME=/tmp/system-deno-cache npm exec -
 | HTTP واقعی آماده‌باش `pukanizbahswrupscfmg` | ۲۱ بررسی رد درخواست نامعتبر/توکن نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، schema خصوصی و RPC فقط-service موفق؛ بدون ورود کاربر واقعی یا callback ChatGPT؛ پذیرش پروژهٔ انتخاب‌شده نیست |
 | HTTP واقعی مدرسهٔ `efibfevyiepkwpnobaro` | ۲۷ بررسی رد Client/Token/Code و Refresh/Revoke نامعتبر، APIهای محافظت‌شده، Origin/CORS و Headerها، schema خصوصی/RPC محدود و مدیریت بدون احراز هویت موفق؛ بدون Password/TOTP مثبت کاربر مدرسه یا callback ChatGPT |
 
-این suiteها حساب، داده یا Client واقعی تولید/ChatGPT نمی‌سازند. تصویر رسمی GoTrue و PostgreSQL محلی با digest ثابت استفاده شدند و منابع Docker متعلق به تست پاک شدند. SQL و Backend روی `efibfevyiepkwpnobaro` جداگانه نصب و هفت جدول با RLS، ACL guard و کنترل Session تأیید شدند؛ داده‌های ۵۲ جدول قبلی، شش حساب Auth، یک عامل MFA و تعریف‌ها/مجوزهای قبلی حفظ شدند. انتشار رابط هنوز در حال تکمیل است. شمارش Client/Grant/Access/Refresh اتصال صفر است و توکن یا مجوز نمایشی ساخته نشده است. جزئیات و محدودیت Snapshot خصوصی بازیابی در [MIGRATION.md](MIGRATION.md) آمده‌اند؛ Backup کامل یا مدیریت‌شده ادعا نمی‌شود. پذیرش نهایی با Client واقعی، callback ثبت‌شده و همان حساب‌های مدرسه انجام می‌شود.
+این suiteها حساب، داده یا Client واقعی تولید/ChatGPT نمی‌سازند. تصویر رسمی GoTrue و PostgreSQL محلی با digest ثابت استفاده شدند و منابع Docker متعلق به تست پاک شدند. SQL و Backend روی `efibfevyiepkwpnobaro` جداگانه نصب و هفت جدول با RLS، ACL guard و کنترل Session تأیید شدند؛ داده‌های ۵۲ جدول قبلی، شش حساب Auth، یک عامل MFA و تعریف‌ها/مجوزهای قبلی حفظ شدند. رابط از `main` روی [سایت مدرسه](https://mozdbaranarshiya.github.io/system/) منتشر شده و فایل‌های اصلی آن با Commit ادغام‌شده برابرند. شمارش Client/Grant/Access/Refresh اتصال صفر است و توکن یا مجوز نمایشی ساخته نشده است. جزئیات و محدودیت Snapshot خصوصی بازیابی در [MIGRATION.md](MIGRATION.md) آمده‌اند؛ Backup کامل یا مدیریت‌شده ادعا نمی‌شود. پذیرش نهایی با Client واقعی، callback ثبت‌شده و همان حساب‌های مدرسه انجام می‌شود.
 
 ### ابزار استقرار در محیط ابری
 

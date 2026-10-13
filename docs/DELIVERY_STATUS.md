@@ -1,6 +1,6 @@
-# Delivery status — 2026-10-10
+# Delivery status — published school release
 
-کد روی شاخهٔ `feature/secure-chatgpt-oauth` در GitHub است: [PR #12](https://github.com/mozdbaranarshiya/system/pull/12). با دستور جدید مالک برای تکمیل همهٔ کارها، SQL افزایشی روی پروژهٔ واقعی `efibfevyiepkwpnobaro` نصب و هر سه Backend جدید مستقر شدند. شاخه هنوز به `main` ادغام نشده و انتشار رابط در حال تکمیل است. مدیر، حساب‌ها و داده‌های موجود حفظ می‌شوند؛ اتصال واقعی ChatGPT هنوز به Client و callback پلتفرم نیاز دارد.
+کد با [PR #12](https://github.com/mozdbaranarshiya/system/pull/12) در `main` ادغام و [سایت مدرسه](https://mozdbaranarshiya.github.io/system/) منتشر شد. با دستور جدید مالک برای تکمیل همهٔ کارها، SQL افزایشی روی پروژهٔ واقعی `efibfevyiepkwpnobaro` نصب و هر سه Backend جدید مستقر شدند. GitHub Pages ساخت Commit `689b398234767b288d66cf81be7953be72699b3c` را موفق گزارش کرد؛ هفت فایل عمومی اصلی با نسخهٔ ادغام‌شده byte-for-byte برابرند. مدیر، حساب‌ها و داده‌های موجود حفظ می‌شوند؛ اتصال واقعی ChatGPT هنوز به Client و callback پلتفرم نیاز دارد.
 
 [دانلود ZIP موقت](https://github.com/mozdbaranarshiya/system/releases/download/system-school-plugin-20261010-2019ae0/system-school-plugin-20261010.zip) و [Checksum](https://github.com/mozdbaranarshiya/system/releases/download/system-school-plugin-20261010-2019ae0/system-school-plugin-20261010.zip.sha256) منتشر و با دانلود عمومی دوباره بررسی شدند. آرشیو از Commit `2019ae002bff477335de1336dae32a05b759af58` است؛ خود Git tag نیز با همین Commit تطبیق داده شد. شش فایل، ۱۳٬۵۵۹ بایت و SHA-256 `d22dd4e6ba7063ca58d81d8e0b5bfe26292f965d2469d5a81e4e63e41b780345` دارد. ZIP در Git history قرار نگرفته و تا درخواست بعدی مالک حذف نمی‌شود.
 
@@ -122,6 +122,8 @@ SQL واقعی با PGlite، مرزهای HTTP/Auth، Consent/Connected Apps، S
 | Chromium با config فعلی | ۶ OAuth و ۵۶ رابط اصلی موفق با `/usr/bin/chromium`؛ DB آزمایشی واقعی، HTTP/Auth mock، بدون اتصال به مدرسهٔ Production |
 | Excel از دامنهٔ جایگزین | فایل واقعی، فارسی، RTL، کد ملی رشته‌ای با صفر آغازین و نمرهٔ صفر؛ SHA رسمی حفظ شد |
 | تست‌های تخصصی قبلاً اجراشده در این کار | سه Deno type check، ۲۶ هم‌زمانی PostgreSQL واقعی و ۱۸ Password/TOTP واقعی GoTrue محلی موفق؛ در این مرحله بدون تغییر کد آنها تکرار نشدند |
+| انتشار سایت | PR #12 ادغام شد؛ Pages build موفق و هفت فایل عمومی اصلی HTTP 200 و با نسخهٔ ادغام‌شده برابرند؛ ورود واقعی کاربر آزموده نشده |
+| مرورگر عمومی سایت | دسکتاپ و موبایل هرکدام ۲۹ پاسخ HTTPS واقعی و بدون اعتبارنامه را با Python/TLS معتبر دریافت و در Chromium رندر کردند؛ Login، SDK، UI OAuth و RTL بدون خطای شبکه/JavaScript یا overflow بودند. Native TLS store مرورگر و ورود واقعی کاربر در این نتیجه آزموده نشده‌اند |
 | انتشار ZIP | GitHub Actions run `38064167509` موفق؛ دانلود عمومی، checksum، محتوا، CRC و Git tag بررسی شدند |
 | Backend واقعی مدرسه | ۲۷ بررسی رد Token/Client/Grant نامعتبر، Origin/CORS/Header، API محافظت‌شده، RPCهای فقط-service و Schema خصوصی؛ Client/Grant/Access/Refresh واقعی صفر و ثبت Client بدون MFA انجام نشد |
 
@@ -129,13 +131,13 @@ Playwright در اجرای اولیه دنبال Browser cache غایب بود؛
 
 ## Remaining risks
 
-SQL و Backend روی مدرسهٔ واقعی آماده‌اند؛ انتشار `main`/سایت در حال تکمیل است. callback واقعی و آزمون نهایی دانش‌آموز/دبیر/مدیر در ChatGPT باقی مانده‌اند. Upload ZIP و تزریق امن OAuth Token در ChatGPT Plugins تأیید نشده‌اند؛ این ZIP بستهٔ Integration/Setup است و broker اتصال خودکار/refresh ندارد. مسیر مستند قابل‌تنظیم GPT Actions است. گواهی conformance و Audit امنیتی بیرونی برای Provider اختصاصی انجام نشده است. Backup کامل مدیریت‌شده/PITR پروژه نیز در بررسی فعال نبود.
+SQL، Backend و سایت `main` روی مدرسهٔ واقعی منتشر و بررسی شده‌اند. callback واقعی و آزمون نهایی دانش‌آموز/دبیر/مدیر در ChatGPT باقی مانده‌اند. Upload ZIP و تزریق امن OAuth Token در ChatGPT Plugins تأیید نشده‌اند؛ این ZIP بستهٔ Integration/Setup است و broker اتصال خودکار/refresh ندارد. مسیر مستند قابل‌تنظیم GPT Actions است. گواهی conformance و Audit امنیتی بیرونی برای Provider اختصاصی انجام نشده است. Backup کامل مدیریت‌شده/PITR پروژه نیز در بررسی فعال نبود.
 
 یافته‌های مرتبط موجود جداگانه: مانع اجرای guard برای `service_role` با نصب SQL رفع شد و بدنهٔ guard حفظ شده است. Adapterهای ChatGPT قدیمی Scope واقعی Token و عامل/Session جاری مدیر را مانند Provider جدید کنترل نمی‌کنند؛ قبل از فعال‌کردن مسیر بومی به اصلاح و آزمون مستقل نیاز دارند. سه تابع قدیمی حفظ شدند و fingerprint بستهٔ کد آنها با قبل برابر است؛ تغییر شمارهٔ نسخهٔ آنها نتیجهٔ اعمال تنظیمات Runtime است. RLS گستردهٔ classes و بعضی مجوزهای تاریخی تکلیف با شرط Resource اضافی در API جدید محدود شدند؛ hardening کل Data API قدیمی جداست. GitHub Pages Header سفارشی `frame-ancestors` فراهم نمی‌کند؛ CSP meta این حفاظت را جایگزین نمی‌کند. جزئیات در بخش Security concerns در [OAUTH.md](OAUTH.md).
 
 ## Production configuration required
 
-نصب همین پروژه انجام شده؛ SQL آماده دوباره اجرا نشود. نتیجهٔ تأییدشده: `oauth_tables=7`, `oauth_rls_tables=7`, `service_guard_allowed=true`, `manager_session_guard_ready=true`. سه تابع `oauth-connector`, `admin-user`, `account-security` با Project ref صریح مستقر شدند و سایر تابع‌ها/کاربران/داده‌ها حفظ‌اند. مرحلهٔ جاری انتشار رابط است؛ سپس Client واقعی با MFA مدیر ثبت می‌شود.
+نصب همین پروژه انجام شده؛ SQL آماده دوباره اجرا نشود. نتیجهٔ تأییدشده: `oauth_tables=7`, `oauth_rls_tables=7`, `service_guard_allowed=true`, `manager_session_guard_ready=true`. سه تابع `oauth-connector`, `admin-user`, `account-security` با Project ref صریح مستقر شدند و سایر تابع‌ها/کاربران/داده‌ها حفظ‌اند. رابط نیز منتشر شده؛ مرحلهٔ باقی‌مانده ثبت Client واقعی با MFA مدیر و آزمون اتصال در GPT Actions است.
 
 `SYSTEM_DB_SCHEMA=public`، `OAUTH_SITE_URL=https://mozdbaranarshiya.github.io/system/index.html`، `OAUTH_ALLOWED_ORIGINS=https://mozdbaranarshiya.github.io`، `OAUTH_ALLOW_LOCAL_HTTP=false` و کلیدهای server-only فراهم‌شده توسط Runtime همان پروژه لازم‌اند. Schemaهای خصوصی expose نشوند و cleanup، Audit/Backup و Headerها طبق [MIGRATION.md](MIGRATION.md) تنظیم شوند. هیچ Secret در ZIP یا مرورگر قرار نمی‌گیرد. تنظیمات startup محیط توسعه نیز در Draft ذخیره شده‌اند؛ Save/Publish محیط با انتشار سایت و SQL یکسان نیست.
 
