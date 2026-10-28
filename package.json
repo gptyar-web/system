@@ -3,7 +3,7 @@
   "version": "7.0.0",
   "description": "سامانه مدرسه فارسی و RTL با Supabase؛ بدون نیاز به build",
   "scripts": {
-    "test": "node tests/migrations-check.mjs && node tests/security.mjs && node tests/unit.mjs && node tests/edge.mjs && node tests/admin-user.mjs && node tests/ui.mjs && node tests/schema-isolation.mjs && node tests/connector-removal.mjs",
+    "test": "node tests/migrations-check.mjs && node tests/security.mjs && node tests/unit.mjs && node tests/edge.mjs && node tests/admin-user.mjs && node tests/ui.mjs && node tests/schema-isolation.mjs && node tests/connector-removal.mjs && node tests/school-security-hardening.mjs",
     "test:schema": "node tests/schema-isolation.mjs",
     "test:ui": "node tests/ui.mjs",
     "test:xlsx": "node tests/xlsx.mjs",
