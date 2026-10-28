@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+// A fresh school installation must never ship the deprecated OAuth creation SQL.
+await assert.rejects(()=>readFile('supabase/migrations/20261007_oauth_connector.sql','utf8'),{code:'ENOENT'});
 import {database} from './database-setup.mjs';
 import {seed,migrate} from './fixtures.mjs';
 const [page,app,auth,config,pkg]=await Promise.all([
