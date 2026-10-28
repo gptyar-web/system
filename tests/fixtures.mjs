@@ -23,9 +23,8 @@ export async function seed(db){
   await db.query("insert into announcements(id,created_by,title,body,target_type,target_class_id) values($1,$2,'اطلاعیه قدیمی','متن قدیمی','class',$3)",[uuid(43),ids.teacher,ids.class]);
 }
 export async function migrate(db){for(const file of (await readdir('supabase/migrations')).filter(f=>f.startsWith('20261002_')||f==='20261009_manager_session_guard.sql').sort())await db.exec(await readFile('supabase/migrations/'+file,'utf8'));}
-// Mock Auth state for PGlite/HTTP fixture suites. Real Auth tests import current
-// sessions/factors from isolated GoTrue instead of using this helper.
-export async function seedOAuthSessions(db){
+// Mock native Auth session and MFA factor state for isolated database tests.
+export async function seedAuthSessions(db){
  const sessions={};
  const users=(await db.query('select u.id,p.role from auth.users u join profiles p on p.id=u.id order by u.id')).rows;
  for(const [index,user] of users.entries()){

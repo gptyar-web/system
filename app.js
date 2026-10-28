@@ -242,7 +242,7 @@ function clearPageCache(prefix=""){
 
 
 function showOnlyView(view){
-  ["#loginView","#mfaView","#appView","#passwordView","#oauthView"].forEach(sel=>$(sel)?.classList.add("hidden"));
+  ["#loginView","#mfaView","#appView","#passwordView"].forEach(sel=>$(sel)?.classList.add("hidden"));
   $(view)?.classList.remove("hidden");
 }
 async function currentMfaLevel(){
@@ -458,7 +458,6 @@ function showLogin(){
   $("#appView").classList.add("hidden");
   $("#mfaView")?.classList.add("hidden");
   $("#passwordView")?.classList.add("hidden");
-  $("#oauthView")?.classList.add("hidden");
   $("#loginView").classList.remove("hidden");
 }
 function refsStorageKey(){return state.session?.user?.id?`school-refs-v7:${cfg.SUPABASE_URL.replace(/\/$/,"")}:${dbSchema}:${state.session.user.id}`:null;}
@@ -519,7 +518,6 @@ async function enterApp(){
   }
 
   if(window.SchoolV7?.requirePassword())return;
-  if(await window.SchoolV7?.resumeOAuth?.())return;
   showOnlyView("#appView");
   window.SchoolV7?.afterEnter?.();
   $("#userName").textContent=data.full_name;
