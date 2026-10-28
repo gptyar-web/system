@@ -99,8 +99,16 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM pg_policies
     WHERE ('anon'=ANY(roles) OR 'public'=ANY(roles))
-      AND (coalesce(qual,'') ~* '(is_manager|can_manage_group|teacher_has_access|student_in_class|can_read_assignment_file)\\s*\\('
-        OR coalesce(with_check,'') ~* '(is_manager|can_manage_group|teacher_has_access|student_in_class|can_read_assignment_file)\\s*\\(')
+      AND (
+        coalesce(qual,'') ILIKE ANY (ARRAY[
+          '%is_manager(%','%can_manage_group(%','%teacher_has_access(%',
+          '%student_in_class(%','%can_read_assignment_file(%'
+        ])
+        OR coalesce(with_check,'') ILIKE ANY (ARRAY[
+          '%is_manager(%','%can_manage_group(%','%teacher_has_access(%',
+          '%student_in_class(%','%can_read_assignment_file(%'
+        ])
+      )
   ) THEN RAISE EXCEPTION 'ANONYMOUS_POLICY_USES_SCHOOL_HELPER'; END IF;
 
   FOR p IN
