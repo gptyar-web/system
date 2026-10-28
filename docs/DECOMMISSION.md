@@ -27,3 +27,9 @@
 - ورود عادی، MFA مدیر، تغییر رمز، RLS و دسترسی آموزشی پس از انتشار بدون اختلال کار کنند.
 
 GitHub به‌تنهایی مجوز اجرای SQL، حذف Edge Function یا غیرفعال‌سازی افزونه نصب‌شده در حساب ChatGPT را نمی‌دهد. **تا انجام این اقدامات خارج از مخزن، قطع کامل اتصال در سرویس عملیاتی تأیید نشده است.**
+
+## وضعیت اجرای واقعی — ۲۰۲۶-۱۰-۲۸
+
+با اتصال مدیریت Supabase روی پروژه اصلی `efibfevyiepkwpnobaro`، جدول‌های `system_oauth`، RPCها و Job `system-oauth-cleanup` با Migration `retire_legacy_chatgpt_oauth_20261028` حذف شدند. تعداد Clientهای بومی Auth و `oauth_connected_apps` پیش از حذف صفر بود. Migration `retire_native_chatgpt_records_keep_auth_hook_safe_20261028` نیز جدول‌های `public.oauth_connected_apps` و `system_private.chatgpt_oauth_config` را حذف کرد. سه Edge Function با نام‌های `chatgpt-mcp`، `chatgpt-api` و `oauth-connector` به handler پاسخ‌دهنده 410 Gone تغییر یافتند و قابلیت اصلی آن‌ها غیرفعال است؛ خود نام‌های Functions هنوز در پنل وجود دارند چون ابزار فعلی حذف مستقیم ندارد. تابع `chatgpt_access_token_hook` برای جلوگیری از خرابی احتمالی Auth فعلاً به identity/pass-through تبدیل شده و حذف فیزیکی نهایی آن وابسته به برداشتن ارجاع تنظیمات Auth است. محافظ‌های `oauth_no_direct_access`، `oauth_no_direct_storage`، `oauth_postgrest_guard` و `assert_manager_session` عمداً حفظ شدند. ایندکس دقیقاً تکراری `idx_group_score_archives_group` نیز حذف شد. اتصال افزونه‌ای در حساب ChatGPT یا انتشار Releaseهای قبلی از مسیر Supabase قابل حذف یا تأیید نیست.
+
+**هشدار:** تکرار Migrationهای حذف روی محیطی که قبلاً پاک‌سازی شده لازم نیست. قبل از هر تغییری در Hook/Auth یا RLS، تنظیمات زنده، وابستگی‌ها و ورود مدیر را مستقل بررسی کنید.
