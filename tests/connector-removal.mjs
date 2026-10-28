@@ -19,9 +19,9 @@ try{
     create schema system_oauth;
     create table system_oauth.clients(client_id text primary key);
     create table system_oauth.grants(id uuid primary key);
-    create function public.oauth_operation(text,jsonb) returns jsonb language sql as 'select null::jsonb';
-    create function public.oauth_api(text,text,jsonb) returns jsonb language sql as 'select null::jsonb';
-    create function public.oauth_cleanup() returns jsonb language sql as 'select null::jsonb';
+    create function public.oauth_operation(text,jsonb) returns jsonb language sql as 'select null::jsonb /* system_oauth */';
+    create function public.oauth_api(text,text,jsonb) returns jsonb language sql as 'select null::jsonb /* system_oauth */';
+    create function public.oauth_cleanup() returns jsonb language sql as 'select null::jsonb /* system_oauth */';
     create function system_oauth.profile_security_changed() returns trigger language plpgsql as 'begin return new; end';
     create function system_oauth.auth_security_changed() returns trigger language plpgsql as 'begin return new; end';
     create trigger oauth_profile_security after update on public.profiles for each row execute function system_oauth.profile_security_changed();
