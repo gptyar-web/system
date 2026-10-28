@@ -14,7 +14,6 @@ export const sources = Object.freeze([
   ['supabase/migrations/20261002_system_v7_02_exams.sql', 'f082693e82c71606205389cd41b10c4dc4f5daf7711ad919056d118f183bda64'],
   ['supabase/migrations/20261002_system_v7_03_community.sql', '8767b83c71b50283498799e7c1b4ea650b4e625bd343cb314ed35372a4a1f2ab'],
   ['supabase/migrations/20261002_system_v7_04_integrations.sql', '97f8d1626b4154cfd9b7b7407056b1836834701257ca1a18ce99cb6363739ae3'],
-  ['supabase/migrations/20261007_oauth_connector.sql', '60168e1071c71f912f95f1cce16fabe9829a4b7ec88d62bc8ce8c5a6a21b78f7'],
   ['supabase/migrations/20261009_manager_session_guard.sql', '3304b22a56a6d3cea271a9370f2fe3e8a5a4a5190251bc90d686d94730d94a81'],
 ].map(([file, hash]) => Object.freeze({ file, sha256: hash })));
 
@@ -23,14 +22,14 @@ do $school_preflight$
 declare ns text; required text; cron_collision boolean;
 begin
   -- This is a fresh installation, not a repair or overwrite operation.
-  foreach ns in array array['school','school_private','school_oauth'] loop
+  foreach ns in array array['school','school_private'] loop
     if exists(select 1 from pg_namespace where nspname=ns) then
       raise exception 'SCHOOL_INSTALL_NOT_EMPTY: %', ns;
     end if;
   end loop;
   if exists(select 1 from storage.buckets where id='school-assignment-files')
     or exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname like 'school\\_%' escape '\\')
-    or exists(select 1 from pg_trigger where tgrelid='auth.users'::regclass and tgname='school_oauth_auth_security') then
+    then
     raise exception 'SCHOOL_INSTALL_SHARED_NAME_COLLISION';
   end if;
   foreach required in array array['anon','authenticated','service_role'] loop
@@ -40,7 +39,7 @@ begin
     raise exception 'SCHOOL_INSTALL_REQUIRES_PGCRYPTO';
   end if;
   if exists(select 1 from pg_extension where extname='pg_cron') then
-    execute 'select exists(select 1 from cron.job where jobname in (''school-v7-reminders'',''school-oauth-cleanup''))' into cron_collision;
+    execute 'select exists(select 1 from cron.job where jobname in (''school-v7-reminders''))' into cron_collision;
     if cron_collision then raise exception 'SCHOOL_INSTALL_CRON_NAME_COLLISION'; end if;
   end if;
   if to_regclass('auth.users') is null or to_regclass('auth.sessions') is null or to_regclass('auth.mfa_factors') is null
@@ -125,7 +124,10 @@ begin
   -- Same sorted profile locks as the security writers; no shared Auth mutation.
   perform id from school.profiles where id in (p_user,p_actor) order by id for update;
   if not exists(select 1 from school.profiles where id=p_actor and role='manager' and active and not must_change_password)
-    or not school_oauth.live_user(p_actor) then raise exception 'ACCESS_DENIED'; end if;
+    or not exists(select 1 from auth.users u
+      where u.id=p_actor and u.deleted_at is null
+        and (u.banned_until is null or u.banned_until <= clock_timestamp()))
+    then raise exception 'ACCESS_DENIED'; end if;
   if not exists(select 1 from school.profiles where id=p_user and role in ('teacher','student')) then raise exception 'ACCESS_DENIED'; end if;
   claims_before:=current_setting('request.jwt.claims',true);
   audit_before:=current_setting('system.audit_actor',true);
@@ -151,15 +153,12 @@ function transform(sql, file) {
   // dynamic SQL and regprocedure literals. PUBLIC the role stays PUBLIC.
   let output = sql.replace(/\bpublic\./g, 'school.')
     .replace(/\bsystem_private\b/g, 'school_private')
-    .replace(/\bsystem_oauth\b/g, 'school_oauth')
     .replace(/\bset\s+search_path\s*=\s*public(?:\s*,\s*pg_catalog)?\b/gi, 'set search_path=school,pg_catalog')
     .replace(/\bon\s+schema\s+public\b/gi, 'on schema school')
     .replace(/\bn\.nspname\s*=\s*'public'/g, "n.nspname='school'")
     .replaceAll("'assignment-files'", "'school-assignment-files'")
     .replaceAll("'system-v7-reminders'", "'school-v7-reminders'")
-    .replaceAll("'system-oauth-cleanup'", "'school-oauth-cleanup'")
     .replace(/\b(create\s+policy|drop\s+policy\s+if\s+exists)\s+([a-z_][a-z0-9_]*)/gi, '$1 school_$2')
-    .replace(/\bcreate\s+trigger\s+oauth_auth_security\b/gi, 'create trigger school_oauth_auth_security')
     // All emitted transactions keep the actual caller/owner. No SET ROLE side
     // effect is inherited by later Management API calls.
     .replace(/^set role postgres;\s*$/gm, '');
@@ -197,9 +196,9 @@ export async function generateSchoolInstallation({ root = repository } = {}) {
   // It still makes no external connection; the caller must inspect the target.
   const atomicSql = 'begin;\n'+steps.map(step => stripTransaction(step.sql)).join('\n')+'\ncommit;\n';
   const manifest = {
-    format_version: 1, schema: 'school', private_schemas: ['school_private','school_oauth'],
+    format_version: 1, schema: 'school', private_schemas: ['school_private'],
     bucket: 'school-assignment-files', native_auth: 'shared, unchanged',
-    prerequisites: ['Clean school/school_private/school_oauth namespaces', 'PostgreSQL 13+ with native Supabase Auth and Storage', 'pgcrypto already installed', 'Database owner privileges', 'Expose school separately in PostgREST after installation'],
+    prerequisites: ['Clean school/school_private namespaces', 'PostgreSQL 13+ with native Supabase Auth and Storage', 'pgcrypto already installed', 'Database owner privileges', 'Expose school separately in PostgREST after installation'],
     atomic_file: 'install.sql', atomic_sha256: sha256(atomicSql),
     steps: steps.map(({ sql: _sql, ...metadata }) => metadata),
   };

@@ -6,7 +6,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { generateSchoolInstallation, sources } from '../supabase/install-school.mjs';
 import { database } from './database-setup.mjs';
-import { seed, migrate, seedOAuthSessions, ids as publicIds } from './fixtures.mjs';
+import { seed, migrate, seedAuthSessions, ids as publicIds } from './fixtures.mjs';
 
 const hash = text => createHash('sha256').update(text).digest('hex');
 const uuid = n => '00000000-0000-4000-8000-'+String(n).padStart(12,'0');
@@ -77,8 +77,6 @@ const call=(db,name,args,schema='school')=>{
   const entries=Object.entries(args);
   return db.query(`select ${schema}.${name}(${entries.map(([key],i)=>key+' => $'+(i+1)).join(',')}) value`,entries.map(([,value])=>value)).then(r=>r.rows[0].value);
 };
-const op=(db,action,data)=>asRole(db,'service_role',()=>call(db,'oauth_operation',{p_action:action,p_data:data}));
-const api=(db,token,resource='me',filters={})=>asRole(db,'service_role',()=>call(db,'oauth_api',{p_token_hash:token,p_resource:resource,p_filters:filters}));
 const sessions=Object.fromEntries(['manager','teacher','student','otherStudent','initial','removable'].map((key,i)=>[ids[key],uuid(1000+i)]));
 async function seedSchool(db) {
   for(const [key,role] of [['manager','manager'],['teacher','teacher'],['student','student'],['otherStudent','student'],['initial','student'],['removable','student']]) {
@@ -94,20 +92,6 @@ async function seedSchool(db) {
   await db.query("insert into school.scores(student_id,class_id,subject_id,continuous_score,final_score) values($1,$2,$3,14,18),($4,$5,$3,16,20)",[ids.student,ids.class,ids.subject,ids.otherStudent,ids.otherClass]);
   await db.exec('update school.school_settings set report_cards_open=true');
 }
-const client=uuid(3000),callback='https://chatgpt.com/aip/school-isolation/oauth/callback',challenge='b'.repeat(43);
-let serial=4000;
-async function connect(db,user,scopes=['profile.read','classes.read','grades.read']) {
-  const number=serial++;
-  const request={request_id:uuid(number),client_id:client,redirect_uri:callback,user_id:user,session_id:sessions[user],scopes,state:'isolation-'+number,code_challenge:challenge,csrf_hash:hash('csrf-'+number),mfa_time:user===ids.manager?Math.floor(Date.now()/1000):null};
-  assert.ok((await op(db,'prepare',request)).request_id);
-  const code=hash('code-'+number),access=hash('access-'+number),refresh=hash('refresh-'+number);
-  assert.equal((await op(db,'decide',{...request,approve:true,code_hash:code})).approved,true);
-  const exchange={client_id:client,code_hash:code,redirect_uri:callback,code_challenge:challenge,access_hash:access,refresh_hash:refresh};
-  assert.equal((await op(db,'exchange',exchange)).expires_in,900);
-  const grant=(await db.query('select grant_id from school_oauth.codes where code_hash=$1',[code])).rows[0].grant_id;
-  return {access,refresh,grant,exchange};
-}
-
 await test('Generator checks reviewed sources and emits a reproducible atomic SHA manifest',async()=>{
   assert.equal(installation.manifest.steps.length,sources.length+1);assert.equal(installation.manifest.atomic_sha256,hash(installation.sql));
   assert.deepEqual(installation.manifest.steps.slice(0,sources.length).map(s=>s.source_sha256),sources.map(s=>s.sha256));
@@ -132,7 +116,7 @@ for(const cryptoSchema of ['public','extensions']) {
       const newBucket=(await db.query("select * from storage.buckets where id='school-assignment-files'")).rows[0];
       assert.equal(newBucket.public,false);assert.equal(newBucket.file_size_limit,20971520);
       const policies=(await db.query("select policyname from pg_policies where schemaname='storage' and policyname like 'school\\_%' escape '\\'")).rows;
-      assert.ok(policies.length>=9);assert.equal((await db.query("select count(*)::int count from pg_trigger where tgrelid='auth.users'::regclass and tgname in ('exam_auth_guard','school_oauth_auth_security')")).rows[0].count,2);
+      assert.ok(policies.length>=9);assert.equal((await db.query("select count(*)::int count from pg_trigger where tgrelid='auth.users'::regclass and tgname='exam_auth_guard'")).rows[0].count,1);
     });
     await seedSchool(db);
     await test('School account readiness and manager MFA use the separate schema',async()=>{
@@ -174,52 +158,12 @@ for(const cryptoSchema of ['public','extensions']) {
       assert.equal(await check(),true);
     });
     await test('Default function search paths exclude the unrelated public application',async()=>{
-      const functions=(await db.query("select p.proname,p.proconfig from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('school','school_private','school_oauth') and p.prosecdef")).rows;
+      const functions=(await db.query("select p.proname,p.proconfig from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('school','school_private') and p.prosecdef")).rows;
       assert.ok(functions.length>20);for(const fn of functions){assert.ok(fn.proconfig?.some(v=>v.startsWith('search_path=')),fn.proname);assert.doesNotMatch(fn.proconfig.join(','),/\bpublic\b/);}
     });
-    await test('Opaque lifecycle RPCs and private schema remain service-only',async()=>{
-      for(const role of ['anon','authenticated'])await asRole(db,role,async()=>{
-        await assert.rejects(()=>call(db,'oauth_operation',{p_action:'client',p_data:{client_id:client}}),/permission denied/);
-        await assert.rejects(()=>db.query('select * from school_oauth.clients'),/permission denied/);
-      },ids.student);
-      await asRole(db,'service_role',()=>assert.rejects(()=>db.query('select * from school_oauth.clients'),/permission denied/));
-    });
-    await test('Client registration requires the real manager and persisted MFA context',async()=>{
-      const register={actor:ids.manager,session_id:sessions[ids.manager],mfa_time:Math.floor(Date.now()/1000),client_id:client,name:'ChatGPT',redirect_uris:[callback],allowed_scopes:['profile.read','classes.read','grades.read'],secret_hash:hash('school-client-fixture'),pkce_required:true};
-      assert.equal((await op(db,'register',{...register,mfa_time:null})).error,'mfa_required');
-      assert.equal((await op(db,'register',{...register,actor:ids.teacher,session_id:sessions[ids.teacher]})).error,'access_denied');
-      assert.equal((await op(db,'register',register)).ok,true);
-    });
-    const student=await connect(db,ids.student),teacher=await connect(db,ids.teacher),manager=await connect(db,ids.manager);
-    await test('School OAuth API applies scopes, student ownership and teacher assignment',async()=>{
-      assert.deepEqual(await api(db,student.access),{id:ids.student,display_name:'Fixture student'});
-      assert.deepEqual((await api(db,student.access,'classes')).rows.map(row=>row.id),[ids.class]);
-      assert.equal((await api(db,student.access,'grades',{student_id:ids.otherStudent})).error,'access_denied');
-      assert.deepEqual((await api(db,teacher.access,'classes')).rows.map(row=>row.id),[ids.class]);
-      assert.equal((await api(db,teacher.access,'grades',{class_id:ids.otherClass})).error,'access_denied');
-      assert.equal((await api(db,manager.access,'classes')).rows.length,2);
-      const narrow=await connect(db,ids.student,['profile.read']);assert.equal((await api(db,narrow.access,'classes')).error,'insufficient_scope');
-    });
-    await test('Unrelated native Auth security updates keep school grants and the old exam app intact',async()=>{
-      const publicBefore=(await db.query('select * from public.exams order by id')).rows;
-      const grantsBefore=(await db.query('select id,revoked_at from school_oauth.grants order by id')).rows;
-      await asRole(db,'supabase_auth_admin',async()=>{
-        await db.query('update auth.users set encrypted_password=$1 where id=$2',[hash('unrelated-native-password-update'),ids.examOnly]);
-        await db.query("update auth.users set banned_until=clock_timestamp()+interval '1 hour' where id=$1",[ids.examOnly]);
-        await db.query('update auth.users set deleted_at=clock_timestamp() where id=$1',[ids.examOnly]);
-      });
-      assert.deepEqual((await db.query('select * from public.exams order by id')).rows,publicBefore);
-      assert.deepEqual((await db.query('select id,revoked_at from school_oauth.grants order by id')).rows,grantsBefore);
-      assert.equal((await api(db,teacher.access)).id,ids.teacher);
-      assert.equal((await db.query("select count(*)::int count from pg_trigger where tgrelid='auth.users'::regclass and tgname='exam_auth_guard'")).rows[0].count,1);
-    });
-    await test('Single use, refresh and disconnect operate only on the isolated grants',async()=>{
-      assert.equal((await op(db,'exchange',student.exchange)).error,'invalid_grant');
-      const access=hash('rotated-'+cryptoSchema),refresh=hash('rotated-refresh-'+cryptoSchema);
-      assert.equal((await op(db,'refresh',{client_id:client,refresh_hash:student.refresh,access_hash:access,next_refresh_hash:refresh})).expires_in,900);
-      assert.equal((await api(db,access)).id,ids.student);
-      assert.equal((await op(db,'disconnect',{actor:ids.student,session_id:sessions[ids.student],grant_id:student.grant})).ok,true);
-      assert.equal((await api(db,access)).error,'invalid_token');
+    await test('Third-party linking schema and RPC are absent',async()=>{
+      assert.equal((await db.query("select count(*)::int n from pg_namespace where nspname='school_oauth'")).rows[0].n,0);
+      assert.equal((await db.query("select count(*)::int n from pg_proc p join pg_namespace n on p.pronamespace=n.oid where n.nspname='school' and p.proname like 'oauth_%'")).rows[0].n,0);
     });
     await test('Broad existing Storage policies cannot read another school user file',async()=>{
       await db.query('insert into storage.objects(id,bucket_id,name,owner) values($1,$2,$3,$4)',[uuid(5001),'school-assignment-files',ids.student+'/private.txt',ids.student]);
@@ -263,7 +207,7 @@ for(const cryptoSchema of ['public','extensions']) {
       for(const args of [{p_user:ids.removable,p_actor:ids.teacher},{p_user:ids.manager,p_actor:ids.manager},{p_user:ids.manager,p_actor:ids.student},{p_user:ids.examOnly,p_actor:ids.manager}])await asRole(db,'service_role',()=>assert.rejects(()=>call(db,'remove_profile_access',args),/ACCESS_DENIED/));
     });
     await test('Removing school access preserves shared Auth, password and old exam ownership',async()=>{
-      const connected=await connect(db,ids.removable),beforeRemoval=await snapshot(db);
+      const beforeRemoval=await snapshot(db);
       // An ordinary populated account must still be removable. These records
       // have NO ACTION profile FKs, so DELETE would fail and leave access live.
       await db.query("insert into school.notifications(user_id,type,title,dedup_key) values($1,'fixture','Existing history','removal-history')",[ids.removable]);
@@ -271,8 +215,6 @@ for(const cryptoSchema of ['public','extensions']) {
       assert.deepEqual(await snapshot(db),beforeRemoval);
       assert.equal((await db.query('select active from school.profiles where id=$1',[ids.removable])).rows[0].active,false);
       assert.equal((await db.query('select count(*)::int count from school.notifications where user_id=$1',[ids.removable])).rows[0].count,1);
-      assert.equal((await api(db,connected.access)).error,'invalid_token');
-      assert.equal((await op(db,'refresh',{client_id:client,refresh_hash:connected.refresh,access_hash:hash('removed-access'),next_refresh_hash:hash('removed-refresh')})).error,'invalid_grant');
       assert.equal((await db.query("select user_id from school.audit_logs where action='SCHOOL_ACCESS_REMOVED'")).rows[0].user_id,ids.manager);
       assert.equal((await asRole(db,'authenticated',()=>db.query('select * from public.exams'),ids.removable)).rows.length,1);
     });
@@ -286,7 +228,7 @@ await test('A late SQL failure rolls back the whole installation including Stora
   const db=await setup();try{
     const before=await snapshot(db);
     await assert.rejects(()=>db.exec(installation.sql.replace(/commit;\s*$/,'select school.missing_install_guard();\ncommit;')),/does not exist/);await db.exec('rollback');
-    assert.equal((await db.query("select count(*)::int count from pg_namespace where nspname in ('school','school_private','school_oauth')")).rows[0].count,0);
+    assert.equal((await db.query("select count(*)::int count from pg_namespace where nspname in ('school','school_private')")).rows[0].count,0);
     assert.deepEqual(await snapshot(db),before);
     assert.equal((await db.query("select count(*)::int count from storage.buckets where id='school-assignment-files'")).rows[0].count,0);
   }finally{await db.close();}
@@ -316,7 +258,7 @@ await test('An edited input migration cannot emit an unreviewed installation art
 });
 await test('The additive manager-session migration works with the original public installation',async()=>{
   const db=await database();try{
-    await seed(db);await migrate(db);const nativeSessions=await seedOAuthSessions(db);
+    await seed(db);await migrate(db);const nativeSessions=await seedAuthSessions(db);
     await db.exec(await readFile('supabase/migrations/20261009_manager_session_guard.sql','utf8'));
     const check=(user=publicIds.manager,session=nativeSessions[publicIds.manager].session_id)=>asRole(db,'service_role',()=>call(db,'assert_manager_session',{p_user:user,p_session:session},'public'));
     assert.equal(await check(),true);
