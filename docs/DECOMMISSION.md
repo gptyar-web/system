@@ -2,6 +2,12 @@
 
 این مخزن دیگر کد اتصال ChatGPT، صفحهٔ اجازهٔ اتصال، افزونه، endpoint اختصاصی و بستهٔ انتشار آن را ارائه نمی‌کند. کنترل MFA مدیر، مدیریت کاربران و ورود Supabase Auth حفظ می‌شوند.
 
+## روش دریافت گزارش بدون اطلاعات محرمانه
+
+فایل [گزارش فقط‌خواندنی](../supabase/diagnostics/chatgpt-metadata-audit.sql) را جداگانه در SQL Editor هر یک از پروژه‌های اصلی و آماده‌باش اجرا کنید. فقط ستون `safe_report` را با برچسب پروژه ارسال کنید. این گزارش نام schema، توابع، Trigger و Policy را می‌خواند و ردیف اطلاعات کاربران، توکن و کلید را نمایش نمی‌دهد.
+
+برای مشاهده نام توابع Edge، پس از اجرای `supabase login` روی دستگاه شخصی خودتان، دستور `bash scripts/chatgpt-edge-functions.sh audit main` و برای پروژه آماده‌باش `bash scripts/chatgpt-edge-functions.sh audit standby` را اجرا کنید. اجرای `remove` فقط بعد از تأیید مقصد، نسخه پشتیبان و بازبینی وابستگی‌ها مجاز است؛ هر تابع تأیید جداگانه لازم دارد.
+
 ## عملیات لازم روی سرویس زنده
 
 طبق سوابق مخزن، پروژهٔ اصلی `efibfevyiepkwpnobaro` قبلاً دارای schema اختصاصی `system_oauth` و Edge Function به نام `oauth-connector` بوده است. دو Edge Function قدیمی `chatgpt-api` و `chatgpt-mcp` نیز گزارش شده‌اند. پروژهٔ آماده‌باش `pukanizbahswrupscfmg` احتمالاً دارای schema `school_oauth` و Job مستقل است. وضعیت واقعی فعلی از اتصال GitHub قابل تأیید نیست.
