@@ -9,7 +9,7 @@ const as=async(user,sql,params=[])=>asUser(db,user,()=>db.query(sql,params));
 try {
   await seed(db);
   await migrate(db);
-  await db.query('insert into public.class_representatives(class_id,student_id) values($1,$2)',[ids.class,ids.student]);
+  /* Representative appointment already created by shared seed fixture. */
 
   const before=(await as(ids.student,'select public.get_app_bootstrap() as boot')).rows[0].boot;
   assert.equal(before.classStudents.filter(x=>x.class_id===ids.class).length,1,
