@@ -4,7 +4,10 @@ import {JSDOM,VirtualConsole} from 'jsdom';
 import {database} from './database-setup.mjs';
 import {seed,migrate,ids,asUser,rpc} from './fixtures.mjs';
 import {adapter} from './adapter.mjs';
-const db=await database();await seed(db);await migrate(db);const query=adapter(db);let checks=0;
+const db=await database();await seed(db);await migrate(db);
+await db.exec(await readFile('supabase/migrations/20261029_fix_class_representative_roster.sql','utf8'));
+await db.query('insert into public.class_representatives(class_id,student_id) values($1,$2)',[ids.class,ids.student]);
+const query=adapter(db);let checks=0;
 const pause=()=>new Promise(resolve=>setTimeout(resolve,25));
 const errors=[],sessions=[];
 async function session(user){
@@ -21,7 +24,14 @@ async function route(dom,name){await dom.window.SystemCore.navigate(name);await 
 try{
 const manager=await session('manager');
 for(const name of ['users','structure','assignments','scores','homeworkGrades','excel','announcements','settings','timetable','attendance','exams','question-bank','calendar','notifications','student-profile','behavior','forms','polls','extracurricular','appointments','reports','search','security','audit'])await route(manager,name);
-await route(manager,'forms');let doc=manager.window.document;await doc.querySelector('#newForm').onclick({target:doc.querySelector('#newForm')});assert.equal(doc.querySelector('#modal').open,true);
+await route(manager,'assignments');let doc=manager.window.document;
+doc.querySelector('#addRep').onclick();
+assert.equal(doc.querySelector('#rStudent').options.length,3,'Manager sees only enrolled students for the representative class');
+doc.querySelector('#rClass').value=ids.otherClass;
+doc.querySelector('#rClass').dispatchEvent(new manager.window.Event('change'));
+assert.equal(doc.querySelector('#rStudent').options.length,1,'Class selector filters candidate representatives');
+doc.querySelector('#modal').close();checks++;
+await route(manager,'forms');await doc.querySelector('#newForm').onclick({target:doc.querySelector('#newForm')});assert.equal(doc.querySelector('#modal').open,true);
 doc.querySelector('#fTitle').value='فرم یکپارچه UI';doc.querySelector('.field-label').value='نام تیم';await doc.querySelector('#modalSubmit').onclick();await pause();assert.equal(doc.querySelector('#modal').open,false);assert.match(doc.querySelector('#formList').textContent,/فرم یکپارچه UI/);checks++;
 manager.window.SchoolV7.focusStudent=ids.student;await route(manager,'student-profile');await doc.querySelector('#profileReport').onclick({});await pause();assert.match(doc.querySelector('#content').textContent,/۱۷.۵۰/);checks++;
 assert.equal(doc.querySelector('#mainNav').textContent.includes('تکالیف'),true);manager.window.SchoolV7.cleanup();manager.window.close();
@@ -29,6 +39,9 @@ const teacher=await session('teacher');for(const name of ['dashboard','scores','
 await asUser(db,ids.teacher,async()=>{const question=await rpc(db,'save_bank_question',{p_question:{subject_id:ids.subject,question_type:'essay',question_text:'پاسخ خود را بنویسید.',default_score:20},p_options:[]});await rpc(db,'create_school_exam',{p_exam:{class_id:ids.class,subject_id:ids.subject,teacher_id:ids.teacher,title:'آزمون ذخیره خودکار',start_at:new Date(Date.now()-60000).toISOString(),end_at:new Date(Date.now()+3600000).toISOString(),duration_minutes:30,published:true},p_questions:[{question_id:question,score:20}]});});
 const student=await session('student');for(const name of ['report','homework','groups','announcements','teachers','objections','timetable','attendance','exams','calendar','notifications','student-profile','behavior','forms','polls','extracurricular','appointments','reports','search','security'])await route(student,name);
 assert.equal(student.window.document.querySelector('#mainNav').textContent.includes('امنیت حساب'),true);
+assert.ok(student.window.document.querySelector('#mainNav').textContent.includes('ثبت انضباط'),'Representative must have discipline menu');
+await route(student,'discipline');
+assert.equal(student.window.document.querySelectorAll('.discipline-card tbody tr').length,3,'Representative must see the entire class roster');checks++;
 await route(student,'exams');let studentDoc=student.window.document;await studentDoc.querySelector('.start-exam').onclick({});await pause();const text=studentDoc.querySelector('#examAnswers textarea');
 text.value='پاسخ هنگام تایپ';text.dispatchEvent(new student.window.Event('input'));await new Promise(resolve=>setTimeout(resolve,350));assert.equal((await db.query('select answer_text from exam_answers order by updated_at desc limit 1')).rows[0].answer_text,'پاسخ هنگام تایپ');checks++;
 text.value='پاسخ نهایی بدون خروج از فیلد';text.dispatchEvent(new student.window.Event('input'));await studentDoc.querySelector('#submitExam').onclick({});await pause();assert.equal((await db.query('select answer_text from exam_answers order by updated_at desc limit 1')).rows[0].answer_text,'پاسخ نهایی بدون خروج از فیلد');assert.equal(studentDoc.querySelector('#examAnswers textarea').disabled,true);checks++;
