@@ -732,7 +732,24 @@ async function renderAssignments(){
       await refreshRefs(true);renderAssignments();
     });
     setTimeout(()=>{const b=$("#selectAllStudents");if(b)b.onclick=()=>document.querySelectorAll("#studentChecks input").forEach(x=>x.checked=true)},0);
-  $("#addRep").onclick=()=>modal("ثبت نماینده کلاس",`<div class="form-grid"><label><span>کلاس</span><select id="rClass">${state.classes.map(x=>`<option value="${x.id}">${esc(className(x.id))}</option>`).join("")}</select></label><label><span>دانش‌آموز</span><select id="rStudent">${students.map(x=>`<option value="${x.id}">${esc(x.full_name)}</option>`).join("")}</select></label></div>`,async()=>{const {error}=await state.sb.from("class_representatives").upsert({class_id:$("#rClass").value,student_id:$("#rStudent").value});if(error)throw error;await refreshRefs(true);renderAssignments();});
+  $("#addRep").onclick=()=>{
+    modal("ثبت نماینده کلاس",`<div class="form-grid"><label><span>کلاس</span><select id="rClass">${state.classes.map(x=>`<option value="${x.id}">${esc(className(x.id))}</option>`).join("")}</select></label><label><span>دانش‌آموز عضو کلاس</span><select id="rStudent" required></select></label></div>`,async()=>{
+      const classId=$("#rClass").value,studentId=$("#rStudent").value;
+      if(!studentId||!state.classStudents.some(cs=>cs.class_id===classId&&cs.student_id===studentId))throw new Error("نماینده باید عضو همان کلاس باشد.");
+      const {error}=await state.sb.from("class_representatives").upsert({class_id:classId,student_id:studentId});
+      if(error)throw error;
+      await refreshRefs(true);await renderAssignments();
+    });
+    const updateStudents=()=>{
+      const classId=$("#rClass").value;
+      const enrolled=students.filter(student=>student.active!==false&&state.classStudents.some(cs=>cs.class_id===classId&&cs.student_id===student.id));
+      $("#rStudent").innerHTML=enrolled.map(student=>`<option value="${student.id}">${esc(student.full_name)}</option>`).join("");
+      $("#rStudent").required=true;
+      $("#rStudent").disabled=!enrolled.length;
+    };
+    $("#rClass").onchange=updateStudents;
+    updateStudents();
+  };
   document.querySelectorAll(".del-asg").forEach(b=>b.onclick=async()=>{await state.sb.from("teacher_assignments").delete().eq("id",b.dataset.id);await refreshRefs(true);renderAssignments();});
   document.querySelectorAll(".del-cs").forEach(b=>b.onclick=async()=>{await state.sb.from("class_students").delete().eq("class_id",b.dataset.c).eq("student_id",b.dataset.s);await refreshRefs(true);renderAssignments();});
   document.querySelectorAll(".del-rep").forEach(b=>b.onclick=async()=>{await state.sb.from("class_representatives").delete().eq("class_id",b.dataset.c);await refreshRefs(true);renderAssignments();});
