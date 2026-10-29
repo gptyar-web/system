@@ -6,7 +6,7 @@ import {seed,migrate,ids,asUser,rpc} from './fixtures.mjs';
 import {adapter} from './adapter.mjs';
 const db=await database();await seed(db);await migrate(db);
 await db.exec(await readFile('supabase/migrations/20261029_fix_class_representative_roster.sql','utf8'));
-await db.query('insert into public.class_representatives(class_id,student_id) values($1,$2)',[ids.class,ids.student]);
+/* Representative appointment already created by shared seed fixture. */
 const query=adapter(db);let checks=0;
 const pause=()=>new Promise(resolve=>setTimeout(resolve,25));
 const errors=[],sessions=[];
